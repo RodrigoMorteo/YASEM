@@ -53,7 +53,10 @@ namespace qualityassurance.tools.JSON
             string logFileName = String.Format(@"YASEM-{0}.log",DateTime.Now.ToString(settings.LogOptions.DateTimeFormat));
             string logFilePath = FileUtils.CheckOrSetFullyQuallifiedFilePath($"{settings.LogOptions.DirectoryPath}{Path.DirectorySeparatorChar}{logFileName}"); //set fully qualified path for the log file
             string logPath = FileUtils.CheckOrCreateFile(logFilePath); //recursively create directories if the path does not exsist
-            ConfigureAppenders(logFilePath);
+            if(!settings.LogOptions.Disable)
+            {
+                ConfigureAppenders(logFilePath);
+            }
             Logger.Debug(logPath);
             Logger.Info(logFilePath);
             Logger.Warn("This is a warning message.");
@@ -125,6 +128,7 @@ namespace qualityassurance.tools.JSON
         */
     }
 
+    //TODO: check and set defaults
     public class MailOptions
     {
         public string Protocol { get; set; }
@@ -132,14 +136,16 @@ namespace qualityassurance.tools.JSON
         public int Port { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public string Folder { get; set; }
+        public string Folder { get; set; } = "INBOX"; //set default folder to INBOX (for imap)
+        public bool IgnoreCertificateErrors {get; set; } = true; //ignore errors by default
     }
 
     public class LogOptions
     {
         public string DirectoryPath { get; set; }
         public string LogLevel { get; set; }
-        public string DateTimeFormat { get; set; } = "yyyymmddd"; //Default format 
+        public string DateTimeFormat { get; set; } = "yyyymmddd"; //Default format
+        public bool Disable {get; set;} = false; 
     }
 
     public class ReportingOptions
@@ -158,9 +164,10 @@ namespace qualityassurance.tools.JSON
 
     public class Config
     {
+        public string Id {get;  set;}
         public string Name { get; set; }
         public string Author { get; set; }
-        public string Environment { get; set; }
+        public string Environment { get; set; } ="QA";
         public MailOptions MailOptions { get; set; }
         public LogOptions LogOptions { get; set; }
         public ReportingOptions ReportingOptions { get; set; }
