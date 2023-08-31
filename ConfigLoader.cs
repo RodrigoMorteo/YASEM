@@ -80,6 +80,7 @@ namespace qualityassurance.tools.JSON
 
         public void ConfigureAppenders(string filePath)
         {
+            //TODO: Add appenders according to the settings
             var fileAppender = GetFileAppender(filePath);
             var consoleAppender = GetConsoleAppender();
             BasicConfigurator.Configure(consoleAppender, fileAppender);
