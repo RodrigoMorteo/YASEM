@@ -82,7 +82,7 @@ namespace YASEM
                 var fingerprint = certificate2.Thumbprint;
                 var serial = certificate2.SerialNumber;
                 var issuer = certificate2.Issuer;
-
+                //TODO: Remove sample data (from http://www.mimekit.net/docs/html/Frequently-Asked-Questions.htm)
                 return cn == "imap.gmail.com" && issuer == "CN=GTS CA 1O1, O=Google Trust Services, C=US" &&
                     serial == "00BABE95B167C9ECAF08000000006065B6" &&
                     fingerprint == "E79A011EF55EEC72D2B7E391D193761372796836";

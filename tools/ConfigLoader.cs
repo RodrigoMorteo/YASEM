@@ -13,8 +13,6 @@ using log4net.Core;
 using log4net.Repository.Hierarchy;
 using Newtonsoft.Json;
 
-using log4net;
-
 using qualityassurance.tools;
 
 namespace qualityassurance.tools.JSON
@@ -52,7 +50,7 @@ namespace qualityassurance.tools.JSON
         {
             string logFileName = String.Format(@"YASEM-{0}.log",DateTime.Now.ToString(settings.LogOptions.DateTimeFormat));
             string logFilePath = FileUtils.CheckOrSetFullyQuallifiedFilePath($"{settings.LogOptions.DirectoryPath}{Path.DirectorySeparatorChar}{logFileName}"); //set fully qualified path for the log file
-            string logPath = FileUtils.CheckOrCreateFile(logFilePath); //recursively create directories if the path does not exsist
+            string logPath = FileUtils.CheckOrCreatePath(logFilePath); //recursively create directories if the path does not exsist
             if(!settings.LogOptions.Disable)
             {
                 ConfigureAppenders(logFilePath);
@@ -83,10 +81,19 @@ namespace qualityassurance.tools.JSON
 
         public void ConfigureAppenders(string filePath)
         {
-            //TODO: Add appenders according to the settings
-            var fileAppender = GetFileAppender(filePath);
-            var consoleAppender = GetConsoleAppender();
-            BasicConfigurator.Configure(consoleAppender, fileAppender);
+            IAppender consoleAppender;
+            IAppender fileAppender;
+            if(settings.LogOptions.Appenders.Contains("console"))
+            {
+                consoleAppender = GetConsoleAppender();
+                BasicConfigurator.Configure(consoleAppender);
+            }
+            if(settings.LogOptions.Appenders.Contains("file"))
+            {
+                fileAppender = GetFileAppender(filePath);
+                BasicConfigurator.Configure(fileAppender);
+            }
+            //BasicConfigurator.Configure(consoleAppender, fileAppender);
             ((Hierarchy)LogManager.GetRepository()).Root.Level = Level.All; //Set logger root level (appender filters will apply)
         }
 
@@ -145,7 +152,9 @@ namespace qualityassurance.tools.JSON
         public string DirectoryPath { get; set; }
         public string LogLevel { get; set; }
         public string DateTimeFormat { get; set; } = "yyyymmddd"; //Default format
-        public bool Disable {get; set;} = false; 
+        public bool Disable {get; set;} = false;
+        public List<string> Appenders { get; set; }
+
     }
 
     public class ReportingOptions

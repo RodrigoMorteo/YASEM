@@ -40,9 +40,13 @@ namespace qualityassurance.tools
             return filePath;
         }
 
-        public static String CheckOrCreateFile(string filePath){
+        public static String CheckOrCreatePath(string? filePath){
             filePath = CheckOrSetFullyQuallifiedFilePath(filePath); //get fullyquallified path
-            filePath = Path.GetDirectoryName(filePath);
+            filePath = Path.GetDirectoryName(filePath); //get only the fully quallified directory path (remove filename if any)
+            if(filePath == null || filePath.Length == 0)
+            {
+                throw new Exception("Operation resulted in a null or empty path.");
+            }
             if (!Directory.Exists(filePath)) //check if directory does not exists and create it
             {
                 Directory.CreateDirectory(filePath);
