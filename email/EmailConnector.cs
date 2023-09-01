@@ -18,77 +18,87 @@ namespace YASEM
 {
     public class EmailConnector
     {
-        public bool StartSession(MailOptions mailOptions)
+        public List<MimeMessage> ConnectAndRetrieveMessages(MailOptions mailOptions)
         {
+            List<MimeMessage> messages;
+            mailOptions.Protocol = mailOptions.Protocol.ToLower(); //normalize protocol name
+            ProtocolLogger logger = mailOptions.EnableDebugLog? new ProtocolLogger (Console.OpenStandardOutput ()) : null;
+            //As the protocol clients do not share a sufficiently common ancestor, separate code was built for each
+            //DEBUG
+            Console.WriteLine ($"Connecting to server {mailOptions.Server} using {mailOptions.Protocol}.");
             switch(mailOptions.Protocol)
             {
                 case "pop3":
-                    using (var client = new Pop3Client ()) {
-                    client.Connect (mailOptions.Server, mailOptions.Port, false);
-
-                    client.Authenticate (mailOptions.Email, mailOptions.Password);
-                    Console.WriteLine(client.Count);
-                    /*for (int i = 0; i < client.Count; i++) {
-                        var message = client.GetMessage (i);
-                        Console.WriteLine ("Subject: {0}", message.Subject);
-                    }*/
-
-                    client.Disconnect (true);
-            }
+                    Pop3Client popClient = mailOptions.EnableDebugLog? new Pop3Client(logger) : new Pop3Client();
+                    if(mailOptions.IgnoreCertificateErrors){
+                        popClient.ServerCertificateValidationCallback = (s,c,h,e) => true;
+                        popClient.CheckCertificateRevocation = false;    
+                    }
+                    popClient.Connect (mailOptions.Server, mailOptions.Port, SecureSocketOptions.Auto);
+                    popClient.Authenticate (mailOptions.Email, mailOptions.Password);
+                    messages = GetMessages(popClient, mailOptions);
+                    popClient.Disconnect (true);
                     break;
                 case "imap":
-                    using (var client = new ImapClient ()) {
-                        if(mailOptions.IgnoreCertificateErrors){
-                            //client.ServerCertificateValidationCallback = 
-                            client.CheckCertificateRevocation = false;    
-                        }
-                        
-                        client.Connect (mailOptions.Server, mailOptions.Port, SecureSocketOptions.None);
-                        client.Authenticate (mailOptions.Email, mailOptions.Password);
-
-                        // The Inbox folder is always available on all IMAP servers...
-                        var inbox = client.Inbox; //TODO:Configure Get folder in IMAP client from Settings.
-                        inbox.Open (FolderAccess.ReadOnly);
-
-                        Console.WriteLine ("Total messages: {0}", inbox.Count);
-                        Console.WriteLine ("Recent messages: {0}", inbox.Recent);
-
-                        /*for (int i = 0; i < inbox.Count; i++) {
-                            var message = inbox.GetMessage (i);
-                            Console.WriteLine ("Subject: {0}", message.Subject);
-                        }*/
-                        client.Disconnect (true);
+                    ImapClient iClient;
+                    iClient = mailOptions.EnableDebugLog? new ImapClient (logger) : new ImapClient ();
+                    if(mailOptions.IgnoreCertificateErrors){
+                        iClient.ServerCertificateValidationCallback = (s,c,h,e) => true;
+                        iClient.CheckCertificateRevocation = false;    
                     }
+                    iClient.Connect (mailOptions.Server, mailOptions.Port, SecureSocketOptions.None); //TODO: Test with SecureSocketOptions.Auto
+                    iClient.Authenticate (mailOptions.Email, mailOptions.Password);
+                    messages = GetMessages(iClient, mailOptions);                    
+                    iClient.Disconnect (true);
                     break;
                 default:
                     throw new Exception("Invalid mail protocol");
             }
-            return true;
+            //DEBUG
+            Console.WriteLine($"{messages.Count} email Messages found for {mailOptions.Email} ");
+            return messages;
         }
-        bool IgnoreCertificateValidationCallback (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
-        bool CustomCertificateValidationCallback (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        
+        private bool CustomCertificateValidationCallback (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (sslPolicyErrors == SslPolicyErrors.None)
                 return true;
-
-            // Note: The following code casts to an X509Certificate2 because it's easier to get the
-            // values for comparison, but it's possible to get them from an X509Certificate as well.
-            if (certificate is X509Certificate2 certificate2) {
-                var cn = certificate2.GetNameInfo (X509NameType.SimpleName, false);
-                var fingerprint = certificate2.Thumbprint;
-                var serial = certificate2.SerialNumber;
-                var issuer = certificate2.Issuer;
-                //TODO: Remove sample data (from http://www.mimekit.net/docs/html/Frequently-Asked-Questions.htm)
-                return cn == "imap.gmail.com" && issuer == "CN=GTS CA 1O1, O=Google Trust Services, C=US" &&
-                    serial == "00BABE95B167C9ECAF08000000006065B6" &&
-                    fingerprint == "E79A011EF55EEC72D2B7E391D193761372796836";
-            }
-
+            //Check cert comparsion here. See implementation details in docs/acknowledgements.md[2]
             return false;
+        }
+
+        private List<MimeMessage> GetMessages(Pop3Client client, MailOptions options)
+        {
+            List<MimeMessage> messages = new List<MimeMessage> ();
+            for (int i = 0; i < client.Count; i++) 
+            {
+                messages.Add(client.GetMessage(i));
+                //DEBUG Console.WriteLine ("Subject: {0}", message.Subject);
+            }
+            /*
+            foreach (var uid in folder.Search (SearchQuery.NotSeen)) {
+                var message = folder.GetMessage (uid);
+            }
+            */
+            return messages;
+        }
+
+        private List<MimeMessage> GetMessages(ImapClient client, MailOptions options)
+        {
+            List<MimeMessage> messages = new List<MimeMessage> ();
+            // The Inbox folder is always available on all IMAP servers...
+            var inbox = client.Inbox; //TODO:Configure Get folder in IMAP client from Settings.
+            inbox.Open (FolderAccess.ReadOnly);
+            //DEBUG
+                //Console.WriteLine ("Total messages: {0}", inbox.Count);
+                //Console.WriteLine ("Recent messages: {0}", inbox.Recent);
+
+            for (int i = 0; i < inbox.Count; i++) {
+                messages.Add(inbox.GetMessage (i));
+                //DEBUG 
+                    //Console.WriteLine ("Subject: {0}", message.Subject);
+            }
+            return messages;
         }
     }
 }

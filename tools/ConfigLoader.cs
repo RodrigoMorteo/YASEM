@@ -25,11 +25,9 @@ namespace qualityassurance.tools.JSON
         public ConfigLoader(string configFile)
         {
             configFile = FileUtils.CheckOrSetFullyQuallifiedFilePath(configFile);
-
             if (File.Exists(configFile))
             {
                 string jsonContent = File.ReadAllText(configFile);
-
                 // Deserialize JSON content to C# object
                 try
                 {
@@ -64,19 +62,22 @@ namespace qualityassurance.tools.JSON
 
         private Level getLogLevel()
         {
-            /*string logLevel = ; //TODO: Get log level from settings
-            switch(logLevel)
+            string logLevel = StringUtils.FirstCharToUpperString(settings.LogOptions.LogLevel.ToLower()); //get log level from settings
+            switch (logLevel)
             {
-                case "0":
+                case "Debug":
                     return Level.Debug;
-                case "1":
+                case "Info":
                     return Level.Info;
-                case "2":
+                case "Warn":
                     return Level.Warn;
+                case "Error":
+                    return  Level.Error;
+                case "Fatal":
+                    return  Level.Fatal;
                 default:
                     return Level.Error;
-            }*/
-            return Level.Info;
+            }
         }
 
         public void ConfigureAppenders(string filePath)
@@ -109,7 +110,7 @@ namespace qualityassurance.tools.JSON
         {
             var layout = new PatternLayout("%date:%-5level:[%thread]:[%logger::%method]:%line:%message%newline");
             layout.ActivateOptions();
-            var currentLogLevel = getLogLevel(); //TODO: Set log level from config file
+            var currentLogLevel = getLogLevel();
             var appender = new FileAppender
             {
                 File = logFileName,
@@ -138,50 +139,51 @@ namespace qualityassurance.tools.JSON
     //TODO: check and set defaults
     public class MailOptions
     {
-        public string Protocol { get; set; }
-        public string Server { get; set; }
-        public int Port { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Protocol { get; set; } = "imap"; //set default to imap
+        /// </summary>
+        public string Server { get; set; } //no default
+        public int Port { get; set; } = 143; //set default to not secured imap server port
+        public string Email { get; set; } //no default
+        public string Password { get; set; } //no default
         public string Folder { get; set; } = "INBOX"; //set default folder to INBOX (for imap)
         public bool IgnoreCertificateErrors {get; set; } = true; //ignore errors by default
+        public bool EnableDebugLog {get; set; } = false; //disable mailkit debug log by default
+
     }
 
     public class LogOptions
     {
-        public string DirectoryPath { get; set; }
-        public string LogLevel { get; set; }
+        public string DirectoryPath { get; set; } //TODO: Set current path (.?)
+        public string LogLevel { get; set; } = "Error"; //Default to Error log level
         public string DateTimeFormat { get; set; } = "yyyymmddd"; //Default format
-        public bool Disable {get; set;} = false;
-        public List<string> Appenders { get; set; }
-
+        public bool Disable {get; set;} = false; //Default to false
+        public List<string> Appenders { get; set; } = new List<string>() {"file"};  //Default to file 
     }
 
     public class ReportingOptions
     {
-        public string DirectoryPath { get; set; }
-        public string NameSuffix { get; set; }
+        public string DirectoryPath { get; set; } //TODO: Set current path (.?)
+        public string NameSuffix { get; set; } = ""; //Default to empty string
     }
 
     public class TestStep
     {
-        public string Description { get; set; }
-        public string ValidationType { get; set; }
-        public string Assertion { get; set; }
-        public string ExpectedValue { get; set; }
+        public string Description { get; set; } //no default
+        public string ValidationType { get; set; } //no default
+        public string Assertion { get; set; } //no default
+        public string ExpectedValue { get; set; } //no default
     }
 
     public class Config
     {
-        public string Id {get;  set;}
-        public string Name { get; set; }
-        public string Author { get; set; }
-        public string Environment { get; set; } ="QA";
-        public MailOptions MailOptions { get; set; }
-        public LogOptions LogOptions { get; set; }
-        public ReportingOptions ReportingOptions { get; set; }
-        public List<TestStep> TestSteps { get; set; }
+        public string Id {get;  set;} //no default
+        public string Name { get; set; } //no default
+        public string Author { get; set; } //TODO: Get System Username
+        public string Environment { get; set; } ="QA"; //default to QA
+        public MailOptions MailOptions { get; set; } //see defaults in MailOptions class
+        public LogOptions LogOptions { get; set; } //see defaults in LogOptions class
+        public ReportingOptions ReportingOptions { get; set; } //see defaults in reporting Options class
+        public List<TestStep> TestSteps { get; set; } //see defaults in TestSteps class
     }
-
 
 }

@@ -21,4 +21,20 @@ namespace qualityassurance.tools
             base($"'{value}' is not a valid value of the {enumType.Name} enum.")
         {}
     }
+
+    public class StringUtils {
+        public static string FirstCharToUpperString(string input) //see acknowledgements.md [1]my
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
+
+            return string.Create(input.Length, input, static (Span<char> chars, string str) =>
+            {
+                chars[0] = char.ToUpperInvariant(str[0]);
+                str.AsSpan(1).CopyTo(chars[1..]);
+            });
+        }
+    }
 }
