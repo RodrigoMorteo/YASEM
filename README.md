@@ -48,11 +48,11 @@ Efficiently analyze and interpret test results using YASEM's reporting and loggi
 
 ## Getting Started
 
-For detailed information and a comprehensive user guide, refer to the [docs](docs) folder. This guide will provide step-by-step instructions to help you maximize the potential of YASEM for your email testing needs.
+For detailed information and a comprehensive user guide, refer to the [docs](docs) folder which contains all the information you will need to help you maximize the potential of YASEM for your email testing needs.
 
 Feel free to explore the tool, and hopefully YASEM will simplify and enhance your email testing process. If you have any questions or need further assistance, don't hesitate to reach out by linkedin or twitter, although, keep in mind that due to my busy schedule, no response or support is guaranteed (as stated in the [terms of use](https://www.morteo.mx/TermsOfUse) (external link)).
 
 ## Contributing
-If you want to contribute to this project you can submit a pull request (see [docs/contrubuting.md](docs/CONTRIBUTING.md)) or help me enhance this project [here](https://www.morteo.mx/fundThisProject?YASEM) (external link).
+If you want to contribute to this project you can submit a pull request (see [docs/contrubuting.md](docs/CONTRIBUTING.md)) or to help me keep working with it click [here](https://www.morteo.mx/fund-this-project) (external link).
 
 *Happy Testing with YASEM!*

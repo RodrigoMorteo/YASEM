@@ -1,41 +1,49 @@
+using MimeKit;
 using qualityassurance.tools.JSON;
+
 namespace YASEM
 {
     public class ValidationEngine
     {
+        #region Messages
+        const string INFO_MSG_FINISHED ="Finished Executing Test Case Scenarios.";
+        #endregion
         public List<Validator> TestSteps { get; set; } = new List<Validator>();
-        public ValidationEngine(){}
-
-        public void AddStep(TestStep step) 
-        {
-            //INFO 
-            Console.WriteLine($"Step: {step.Description}" );
-            //DEBUG
-            Console.WriteLine($"Creating Validator of type {step.ValidationType} \"{step.Assertion}\", with expected value of \"{step.ExpectedValue}\".");
-            TestSteps.Add(new Validator(step.Description, step.ValidationType, step.Assertion, step.ExpectedValue));
+        public ValidationEngine(List<TestStep> steps){
+            foreach (var step in steps)
+                {
+                    AddStep(step);
+                }         
         }
-
-        public List<ValidationResult> Execute()
+        public List<ValidationResult> Execute(List<MimeMessage> messages)
         {
             List<ValidationResult> results = new List<ValidationResult>();
-            foreach (Validator validator in TestSteps)
+            foreach( MimeMessage message in messages)
             {
-                results.Add(Perform(validator));
+                Console.WriteLine($"Starting validations on email with subject: {message.Subject.ToString()}");
+                foreach (Validator validator in TestSteps)
+                {
+                    ValidationResult res = validator.Perform(message);
+                    results.Add(res);
+                    //INFO
+                    Console.WriteLine($"\t[{res.Status.ToString().ToUpper()}] Step: {validator.Description}");//INFO
+                    if(res.Status != Result.Pass)
+                        //TODO: WARN
+                        Console.WriteLine($"\t\tExpected: {validator.ExpectedValue} Actual: {res.Actual}");
+                }
             }
+            //TODO: INFO log
+            //Console.WriteLine($"{INFO_MSG_FINISHED}");
+            
             return results;
         }
-
-        private ValidationResult Perform(Validator validator)
+        private void AddStep(TestStep step) 
         {
-            ValidationResult result = new ValidationResult();
-
-            return result;
-        }
-
-        private int CountAttachments()
-        {
-            //var attachments = message.BodyParts.OfType<MimePart> ().Where (part => !string.IsNullOrEmpty (part.FileName));
-            return 0;
+            //TODO: INFO 
+            Console.WriteLine($"Step: {step.Description}" );
+            //TODO: DEBUG
+            Console.WriteLine($"\tCreating Validator of type {step.ValidationType} \"{step.Assertion}\", with expected value of \"{step.ExpectedValue}\".");
+            TestSteps.Add(new Validator(step.Description, step.ValidationType, step.Assertion, step.ExpectedValue));
         }
     }
 }

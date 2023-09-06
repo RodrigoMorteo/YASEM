@@ -2,27 +2,37 @@ namespace YASEM
 {
     public enum ValidationType
     {
-        field, //related to EmailField enum
-        content,
-        header,
-        xpath
+        Field, //related to EmailField enum
+        Content,
+        Header,
+        Xpath
     }
     public enum EmailField
     {
-        subject,
-        sender,
-        recipient,
-        cc,
-        bcc,
-        attachments,
-        body
+        Subject,
+        Sender,
+        Recipient,
+        Cc,
+        Bcc,
+        Attachments,
+        Body
     }
     public enum AssertionType
     {
-        contains,
-        exists_once,
-        exists_many,
-        does_not_exist,
-        expression
+        Contains,
+        Exists_once,
+        Exists_many,
+        Does_not_exist,
+        Expression
+    }
+
+    /// <summary>
+    /// All possible Test Step and Test Case results. 
+    /// </summary>
+    public enum Result{
+        Pass,
+        Fail,
+        Skip,
+        Ignore
     }
 }
