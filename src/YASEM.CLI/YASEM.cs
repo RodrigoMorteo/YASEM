@@ -2,12 +2,15 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using YASEM.CLI;
 using YASEM.Core.Configuration;
 using YASEM.Core.Interfaces;
 using YASEM.Core.Connectors;
 using YASEM.Core.Validators;
 using YASEM.CLI.Interfaces;
+using YASEM.Core.Models;
 
 namespace YASEM.CLI
 {
@@ -27,6 +30,10 @@ namespace YASEM.CLI
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, builder) =>
+                {
+                    builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                })
                 .ConfigureServices((context, services) =>
                 {
                     // Register application services with the DI container
@@ -34,6 +41,7 @@ namespace YASEM.CLI
                     services.AddTransient<ITestCaseLoader, TestCaseLoader>();
                     services.AddTransient<IMailConnector, EmailConnector>();
                     services.AddSingleton<IValidationEngineFactory, ValidationEngineFactory>();
+                    services.Configure<Config>(context.Configuration.GetSection("AppConfig"));
                     // Other services will be registered here.
                 });
     }
