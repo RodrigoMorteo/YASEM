@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace qualityassurance.tools
+namespace YASEM.Core.Utilities
 {
     static class FileUtils 
     {

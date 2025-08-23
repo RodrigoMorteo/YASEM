@@ -1,9 +1,10 @@
 using MimeKit;
-using qualityassurance.tools.JSON;
+using YASEM.Core.Interfaces;
+using YASEM.Core.Models;
 
 namespace YASEM
 {
-    public class ValidationEngine
+    public class ValidationEngine : IValidationEngine
     {
         #region Messages
         const string INFO_MSG_FINISHED ="Finished Executing Test Case Scenarios.";
@@ -42,8 +43,16 @@ namespace YASEM
             //TODO: INFO 
             Console.WriteLine($"Step: {step.Description}" );
             //TODO: DEBUG
-            Console.WriteLine($"\tCreating Validator of type {step.ValidationType} \"{step.Assertion}\", with expected value of \"{step.ExpectedValue}\".");
-            TestSteps.Add(new Validator(step.Description, step.ValidationType, step.Assertion, step.ExpectedValue));
+            Console.WriteLine($"\tCreating Validator of type {step.ValidationType} for field '{step.Field ?? "N/A"}' with assertion '{step.Assertion}' and expected value '{step.ExpectedValue}'.");
+            TestSteps.Add(new Validator(step));
+        }
+    }
+
+    public class ValidationEngineFactory : IValidationEngineFactory
+    {
+        public IValidationEngine Create(List<TestStep> steps)
+        {
+            return new ValidationEngine(steps);
         }
     }
 }

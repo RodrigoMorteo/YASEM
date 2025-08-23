@@ -10,60 +10,67 @@ namespace YASEM
         const string ERR_MSG_INVALID_FIELD = "ERROR: Invalid field type passed. Check the documentation for available field types and correct the field name:";
         const string ERR_MSG_INVALID_ASSERTION = "ERROR: Invalid assertion type passed. Check the documentation for available assertions.";
         #endregion
-        Validator testStep;
-        public FieldValidator(Validator validator)
+        private readonly EmailField _field;
+        private readonly AssertionType _assertion;
+        private readonly string _expectedValue;
+
+        public FieldValidator(EmailField field, AssertionType assertion, string expectedValue)
         {
-            this.testStep = validator;
+            _field = field;
+            _assertion = assertion;
+            _expectedValue = expectedValue;
         }
 
         public ValidationResult PerformOn(MimeMessage message)
         {
             ValidationResult result = new ValidationResult();
             
-            switch(testStep.Expression) //get the actual value from the selected email field
+            // Switch on the strongly-typed enum, not a fragile string.
+            switch(_field) //get the actual value from the selected email field
             {
-                case "Subject":
+                case EmailField.Subject:
                     result.Actual = message.Subject;
                 break;
-                case "Sender":
+                case EmailField.Sender:
                     result.Actual = message.Sender.ToString();
                 break;
-                case "Recipient":
+                case EmailField.Recipient:
                     result.Actual = message.To.ToString();
                 break;
-                case "Cc":
+                case EmailField.Cc:
                     result.Actual = message.Cc.ToString();
                 break;
-                case "Bcc":
+                case EmailField.Bcc:
                     result.Actual = message.Bcc.ToString();
                 break;
-                case "Attachments":
+                case EmailField.Attachments:
                     result.Actual = message.Attachments.Count().ToString();
                 break;
-                case "Body":
+                case EmailField.Body:
                     result.Actual = message.TextBody;
                 break;
                 default:
-                    throw new Exception($"{ERR_MSG_INVALID_FIELD} {testStep.Expression}"); //Constructor in the Validator class should have taken care of safe checking the validator.Expression to the allowed values. If this excepiton is thrown check the aforementioned class.  
+                    // This case should be unreachable if the Validator constructor does its job.
+                    throw new InvalidOperationException($"{ERR_MSG_INVALID_FIELD} {_field}");
             }
 
-            switch(this.testStep.Assertion) //perform the selected assertion with the expected value on the actual value
+            switch(_assertion) //perform the selected assertion with the expected value on the actual value
             {
                 case AssertionType.Contains:
-                    result.Status = Contains(this.testStep.ExpectedValue, result.Actual);
+                    result.Status = Contains(_expectedValue, result.Actual);
                 break;
                 case AssertionType.Exists_once:
-                    result.Status = ExistsOnce(this.testStep.ExpectedValue, result.Actual);
+                    result.Status = ExistsOnce(_expectedValue, result.Actual);
                 break;
                 case AssertionType.Exists_many:
-                    result.Status = ExistsMany(this.testStep.ExpectedValue, result.Actual);
+                    result.Status = ExistsMany(_expectedValue, result.Actual);
                 break;
                 case AssertionType.Does_not_exist:
-                    result.Status = DoesNotExist(this.testStep.ExpectedValue, result.Actual);
+                    result.Status = DoesNotExist(_expectedValue, result.Actual);
                 break;
                 // case AssertionType.Expression: //Field validations do not implement Expression assertions as they are reserved for the XPATH validation type only.
                 default:
-                throw new Exception($"{ERR_MSG_INVALID_ASSERTION}. Check the Assertion field with the value \"{testStep.Assertion}\" in your JSON file."); //Constructor in the Validator class should have taken care of safe chacking the assertion type. If this wxception is thrown check the Validation constructor
+                throw new InvalidOperationException($"{ERR_MSG_INVALID_ASSERTION}. Check the Assertion field with the value \"{_assertion}\" in your JSON file.");
             }
 
             return result;

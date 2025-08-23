@@ -1,6 +1,6 @@
 using System;
 
-namespace qualityassurance.tools
+namespace YASEM.Core.Utilities
 {
     public class EnumValidator{
     public static T ValidateEnumValue<T>(string value) where T : struct, Enum

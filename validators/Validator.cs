@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using MailKit;
 using MimeKit;
 
-using qualityassurance.tools;
-using qualityassurance.tools.JSON;
+using YASEM.Core.Utilities;
+using YASEM.Core.Models;
 
 namespace YASEM
 {
@@ -32,41 +32,48 @@ namespace YASEM
     /// <param name="type">Validation type</param>
     /// <param name="assertion">Assertion type</param>
     /// <param name="expectedValue">Value to to be comparing with</param>
-    /// <exception cref="Exception">Returns an exception if invalid types and assertions are found</exception>
-        public  Validator(string description, string type, string assertion, string expectedValue)
+    /// <exception cref="Exception">Returns an exception if the test step configuration is invalid.</exception>
+        public Validator(TestStep step)
         {
-            Description = description; //Asign test step description
-            Type = EnumValidator.ValidateEnumValue<ValidationType>(StringUtils.FirstCharToUpperString(type.ToLower())); // Convert string to lower, set frist letter to upper case and assign Validtaion Type
-            if(assertion.Length == 0)
+            Description = step.Description;
+            Type = EnumValidator.ValidateEnumValue<ValidationType>(StringUtils.FirstCharToUpperString(step.ValidationType.ToLower()));
+            ExpectedValue = step.ExpectedValue;
+
+            if (string.IsNullOrEmpty(step.Assertion))
             {
                 throw new Exception($"{ERR_MSG_EMPTY_ASSERTION}"); //TODO: Add file and section in md docs.
             }
+
             switch(Type)
-            {   //if validation type is either field or header, it must conform to the format field:subject / header:XMAILER
+            {
                 case ValidationType.Field:
+                    if (string.IsNullOrEmpty(step.Field))
+                    {
+                        throw new ArgumentException("Test steps of type 'field' must specify a 'field' property.", nameof(step.Field));
+                    }
+                    this.Expression = StringUtils.FirstCharToUpperString(step.Field); // e.g., "Subject"
+                    this.Field = EnumValidator.ValidateEnumValue<EmailField>(this.Expression);
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
                 case ValidationType.Header:
-                    if(assertion.Contains(":"))
+                    if (string.IsNullOrEmpty(step.Field))
                     {
-                        this.Expression = StringUtils.FirstCharToUpperString(assertion.Split(":")[0]); //Convert firts letter to upper case and assing the 1st part of the string to the expression
-                        Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(assertion.Split(":")[1])); //Convert first letter to upper case and assing the 2nd part of the string to the expression
+                        throw new ArgumentException("Test steps of type 'header' must specify a 'field' property for the header name.", nameof(step.Field));
                     }
-                    else
-                    {
-                        throw new Exception($"{ERR_MSG_INVALID_FIELD_STRUCTURE}");
-                    }
-                    if(Type == ValidationType.Field){ //check if the field name is valid
-                        this.Field = EnumValidator.ValidateEnumValue<EmailField>(this.Expression);
-                    }
-                break;
+                    this.Expression = step.Field; // The header name, e.g., "X-Mailer"
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
                 case ValidationType.Xpath:
-                    Assertion = AssertionType.Expression;
-                    this.Expression = assertion; //TODO: check assertioin is a valid XPATH expression (Regex?)
-                break;
+                    // Per description.md, for XPath, the expression is the assertion.
+                    this.Assertion = AssertionType.Expression;
+                    this.Expression = step.Assertion; // The XPath expression itself.
+                    break;
+                case ValidationType.Content:
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
                 default:
-                    throw new Exception($"{ERR_MSG_INVALID_TYPE} ({type})");
-                break;
+                    throw new Exception($"{ERR_MSG_INVALID_TYPE} ({step.ValidationType})");
             }
-            ExpectedValue = expectedValue; //set expected value for comparisson according to the assertionType
         }
 
         public ValidationResult Perform(MimeMessage message)
@@ -80,7 +87,8 @@ namespace YASEM
 
                 break;
                 case ValidationType.Field:
-                    FieldValidator fieldValidator = new FieldValidator(this);
+                    // Pass the already-parsed enum and required values for better decoupling and type safety.
+                    FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
                     result = fieldValidator.PerformOn(message);
                 break;
                 case ValidationType.Header:
