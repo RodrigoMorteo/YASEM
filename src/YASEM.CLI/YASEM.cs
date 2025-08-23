@@ -5,8 +5,11 @@ using Microsoft.Extensions.Hosting;
 using YASEM.CLI;
 using YASEM.Core.Configuration;
 using YASEM.Core.Interfaces;
+using YASEM.Core.Connectors;
+using YASEM.Core.Validators;
+using YASEM.CLI.Interfaces;
 
-namespace YASEM
+namespace YASEM.CLI
 {
     // This is the Composition Root of the YASEM.CLI application.
     // Its responsibilities are:

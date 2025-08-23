@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../YASEM.csproj" />
+    <ProjectReference Include="../../src/YASEM.Core/YASEM.Core.csproj" />
+    <ProjectReference Include="../../src/YASEM.CLI/YASEM.CLI.csproj" />
   </ItemGroup>
 
 </Project>

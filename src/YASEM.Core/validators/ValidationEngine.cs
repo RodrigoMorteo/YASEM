@@ -2,7 +2,7 @@ using MimeKit;
 using YASEM.Core.Interfaces;
 using YASEM.Core.Models;
 
-namespace YASEM
+namespace YASEM.Core.Validators
 {
     public class ValidationEngine : IValidationEngine
     {

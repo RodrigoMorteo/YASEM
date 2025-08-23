@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MimeKit;
+using YASEM.Core.Validators;
 
 namespace YASEM.Core.Interfaces
 {

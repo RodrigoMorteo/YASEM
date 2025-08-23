@@ -2,7 +2,7 @@ using MailKit;
 using MimeKit;
 using System.Text.RegularExpressions;
 
-namespace YASEM
+namespace YASEM.Core.Validators
 {
     class FieldValidator 
     {

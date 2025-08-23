@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using YASEM.Core.Models;
 using YASEM.Core.Utilities;
-using YASEM;
+using YASEM.Core.Validators;
 
 namespace YASEM.Tests
 {

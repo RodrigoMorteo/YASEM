@@ -15,7 +15,7 @@ using MailKit.Net.Pop3;
 using MimeKit;
 using YASEM.Core.Models;
 
-namespace YASEM
+namespace YASEM.Core.Connectors
 {
     public class EmailConnector : IMailConnector
     {

@@ -1,4 +1,4 @@
-namespace YASEM
+namespace YASEM.Core.Validators
 {
     public enum ValidationType
     {

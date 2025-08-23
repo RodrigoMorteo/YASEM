@@ -1,7 +1,7 @@
 // Intended path: YASEM.Core/Interfaces/IApplication.cs
 using System.Threading.Tasks;
 
-namespace YASEM.Core.Interfaces
+namespace YASEM.CLI.Interfaces
 {
     public interface IApplication
     {

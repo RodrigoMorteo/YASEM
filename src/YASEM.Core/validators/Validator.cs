@@ -6,7 +6,7 @@ using MimeKit;
 using YASEM.Core.Utilities;
 using YASEM.Core.Models;
 
-namespace YASEM
+namespace YASEM.Core.Validators
 {
     public class Validator
     {
