@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Debug;
 using YASEM.CLI;
 using YASEM.Core.Configuration;
 using YASEM.Core.Interfaces;
@@ -57,7 +61,14 @@ namespace YASEM.CLI
                     services.AddTransient<IPop3Client, Pop3Client>(); // Added
                     services.AddSingleton<IValidationEngineFactory, ValidationEngineFactory>();
                     services.Configure<Config>(context.Configuration.GetSection("AppConfig"));
+                    services.AddLocalization();
                     // Other services will be registered here.
+                })
+                .ConfigureLogging((context, logging) =>
+                {
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    // TODO: Add file logging for comprehensive logging as per plan.md
                 });
     }
 }
