@@ -53,6 +53,6 @@ For detailed information and a comprehensive user guide, refer to the [docs](doc
 Feel free to explore the tool, and hopefully YASEM will simplify and enhance your email testing process. If you have any questions or need further assistance, don't hesitate to reach out by linkedin or twitter, although, keep in mind that due to my busy schedule, no response or support is guaranteed (as stated in the [terms of use](https://www.morteo.mx/TermsOfUse) (external link)).
 
 ## Contributing
-If you want to contribute to this project you can submit a pull request (see [docs/contrubuting.md](docs/CONTRIBUTING.md)) or to help me keep working with it click [here](https://www.morteo.mx/fund-this-project) (external link).
+If you want to contribute to this project you can submit a pull request (see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)) or to help me keep working with it click [here](https://www.morteo.mx/fund-this-project) (external link).
 
 *Happy Testing with YASEM!*
