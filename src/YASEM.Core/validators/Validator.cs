@@ -1,0 +1,122 @@
+using System.Collections.Generic;
+
+using MailKit;
+using MimeKit;
+
+using YASEM.Core.Utilities;
+using YASEM.Core.Models;
+using YASEM.Core.Exceptions;
+using System.Resources;
+
+namespace YASEM.Core.Validators
+{
+        
+    #region ValidationResult
+    public class ValidationResult 
+    {
+        public string Actual {get; set;}  = "" ; //Defaults to empty string
+        public Result Status {get; set;}
+    }
+    #endregion
+    public class Validator
+    {
+        #region Fields
+        public string Description { get; }
+        public ValidationType Type { get; }
+        public AssertionType Assertion { get; }
+        public string ExpectedValue { get; }
+        public string Expression { get; } = "";
+        private EmailField Field = new EmailField();
+        private readonly ResourceManager _resourceManager;
+        #endregion
+
+        #region ERROR messages
+        const string ERR_MSG_EMPTY_ASSERTION = "ERROR: Validators must always have a value in the Assertion field. Read the docs section XX and check your Test Steps in the JSON file.";
+        const string ERR_MSG_INVALID_TYPE = "ERROR: Unknowon validator type specified";
+        const string ERR_MSG_INVALID_FIELD_STRUCTURE = "Validator of types field and header must contain the name of the element of validation in the for ValidatorType:Element (i.e. field:subject or header:X-MAILER)";
+        #endregion
+
+        /// <summary>
+        /// Create a validator from Strings loaded from the config file.
+        /// </summary>
+        /// <param name="description">Test Step description</param>
+        /// <param name="type">Validation type</param>
+        /// <param name="assertion">Assertion type</param>
+        /// <param name="expectedValue">Value to to be comparing with</param>
+        /// <exception cref="Exception">Returns an exception if the test step configuration is invalid.</exception>
+        public Validator(TestStep step)
+        {
+            _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(Validator).Assembly);
+            Description = step.Description;
+            Type = EnumValidator.ValidateEnumValue<ValidationType>(StringUtils.FirstCharToUpperString(step.ValidationType.ToLower()));
+            ExpectedValue = step.ExpectedValue;
+
+            if (string.IsNullOrEmpty(step.Assertion))
+            {
+                throw new ValidationException($"{ERR_MSG_EMPTY_ASSERTION}"); //TODO: Add file and section in md docs.
+            }
+
+            switch (Type)
+            {
+                case ValidationType.Field:
+                    if (string.IsNullOrEmpty(step.Field))
+                    {
+                        throw new ArgumentException("Test steps of type 'field' must specify a 'field' property.", nameof(step.Field));
+                    }
+                    this.Expression = StringUtils.FirstCharToUpperString(step.Field); // e.g., "Subject"
+                    this.Field = EnumValidator.ValidateEnumValue<EmailField>(this.Expression);
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
+                case ValidationType.Header:
+                    if (string.IsNullOrEmpty(step.Field))
+                    {
+                        throw new ArgumentException("Test steps of type 'header' must specify a 'field' property for the header name.", nameof(step.Field));
+                    }
+                    this.Expression = step.Field; // The header name, e.g., "X-Mailer"
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
+                case ValidationType.Xpath:
+                    // Per description.md, for XPath, the expression is the assertion.
+                    this.Assertion = AssertionType.Expression;
+                    this.Expression = step.Assertion; // The XPath expression itself.
+                    break;
+                case ValidationType.Content:
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
+                    break;
+                default:
+                    throw new ValidationException($"{ERR_MSG_INVALID_TYPE} ({step.ValidationType})");
+            }
+        }
+
+        public ValidationResult Perform(MimeMessage message)
+        {
+            ValidationResult result = new ValidationResult();
+            //INFO
+            //Console.WriteLine($" 		Performing validation {this.Type} {this.Assertion} {this.Expression}");
+            switch (this.Type)
+            {
+                case ValidationType.Content:
+
+                    break;
+                case ValidationType.Field:
+                    // Pass the already-parsed enum and required values for better decoupling and type safety.
+                    FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
+                    result = fieldValidator.PerformOn(message);
+                    break;
+                case ValidationType.Header:
+
+                    break;
+                case ValidationType.Xpath:
+
+                    break;
+            }
+            //DEBUG
+            //Console.WriteLine($" 		Expected: {this.ExpectedValue}, Actual: {result.Actual}");
+            return result;
+        }
+
+
+    }
+
+
+}
