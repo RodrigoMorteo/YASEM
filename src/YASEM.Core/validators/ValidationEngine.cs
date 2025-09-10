@@ -1,6 +1,8 @@
 using MimeKit;
 using YASEM.Core.Interfaces;
 using YASEM.Core.Models;
+using YASEM.Core.Exceptions;
+using System.Resources;
 
 namespace YASEM.Core.Validators
 {
@@ -10,7 +12,10 @@ namespace YASEM.Core.Validators
         const string INFO_MSG_FINISHED ="Finished Executing Test Case Scenarios.";
         #endregion
         public List<Validator> TestSteps { get; set; } = new List<Validator>();
+        private readonly ResourceManager _resourceManager;
+
         public ValidationEngine(List<TestStep> steps){
+            _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(ValidationEngine).Assembly);
             foreach (var step in steps)
                 {
                     AddStep(step);
@@ -44,7 +49,14 @@ namespace YASEM.Core.Validators
             Console.WriteLine($"Step: {step.Description}" );
             //TODO: DEBUG
             Console.WriteLine($"\tCreating Validator of type {step.ValidationType} for field '{step.Field ?? "N/A"}' with assertion '{step.Assertion}' and expected value '{step.ExpectedValue}'.");
-            TestSteps.Add(new Validator(step));
+            try
+            {
+                TestSteps.Add(new Validator(step));
+            }
+            catch (NotSupportedException ex)
+            {
+                throw new ValidationException(_resourceManager.GetString("ValidationError"), ex);
+            }
         }
     }
 

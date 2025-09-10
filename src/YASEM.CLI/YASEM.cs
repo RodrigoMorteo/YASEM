@@ -11,6 +11,9 @@ using YASEM.Core.Connectors;
 using YASEM.Core.Validators;
 using YASEM.CLI.Interfaces;
 using YASEM.Core.Models;
+using YASEM.Core.Exceptions;
+using MailKit.Net.Imap; // Added
+using MailKit.Net.Pop3; // Added
 
 namespace YASEM.CLI
 {
@@ -23,9 +26,19 @@ namespace YASEM.CLI
     {
         public static async Task<int> Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-            var app = host.Services.GetRequiredService<IApplication>();
-            return await app.RunAsync(args);
+            try
+            {
+                var host = CreateHostBuilder(args).Build();
+                var app = host.Services.GetRequiredService<IApplication>();
+                return await app.RunAsync(args);
+            }
+            catch (Exception ex) when (ex is MailConnectionException || ex is InvalidConfigurationException || ex is ValidationException || ex is DecryptionException || ex is NoEmailsFoundException)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Error.WriteLine(ex.Message);
+                Console.ResetColor();
+                return 1;
+            }
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -40,6 +53,8 @@ namespace YASEM.CLI
                     services.AddSingleton<IApplication, Application>();
                     services.AddTransient<ITestCaseLoader, TestCaseLoader>();
                     services.AddTransient<IMailConnector, EmailConnector>();
+                    services.AddTransient<IImapClient, ImapClient>(); // Added
+                    services.AddTransient<IPop3Client, Pop3Client>(); // Added
                     services.AddSingleton<IValidationEngineFactory, ValidationEngineFactory>();
                     services.Configure<Config>(context.Configuration.GetSection("AppConfig"));
                     // Other services will be registered here.

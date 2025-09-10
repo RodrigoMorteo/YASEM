@@ -5,9 +5,19 @@ using MimeKit;
 
 using YASEM.Core.Utilities;
 using YASEM.Core.Models;
+using YASEM.Core.Exceptions;
+using System.Resources;
 
 namespace YASEM.Core.Validators
 {
+        
+    #region ValidationResult
+    public class ValidationResult 
+    {
+        public string Actual {get; set;}  = "" ; //Defaults to empty string
+        public Result Status {get; set;}
+    }
+    #endregion
     public class Validator
     {
         #region Fields
@@ -17,34 +27,36 @@ namespace YASEM.Core.Validators
         public string ExpectedValue { get; }
         public string Expression { get; } = "";
         private EmailField Field = new EmailField();
+        private readonly ResourceManager _resourceManager;
         #endregion
 
         #region ERROR messages
-            const string ERR_MSG_EMPTY_ASSERTION = "ERROR: Validators must always have a value in the Assertion field. Read the docs section XX and check your Test Steps in the JSON file.";
-            const string ERR_MSG_INVALID_TYPE = "ERROR: Unknowon validator type specified";
-            const string ERR_MSG_INVALID_FIELD_STRUCTURE = "Validator of types field and header must contain the name of the element of validation in the for ValidatorType:Element (i.e. field:subject or header:X-MAILER)";
+        const string ERR_MSG_EMPTY_ASSERTION = "ERROR: Validators must always have a value in the Assertion field. Read the docs section XX and check your Test Steps in the JSON file.";
+        const string ERR_MSG_INVALID_TYPE = "ERROR: Unknowon validator type specified";
+        const string ERR_MSG_INVALID_FIELD_STRUCTURE = "Validator of types field and header must contain the name of the element of validation in the for ValidatorType:Element (i.e. field:subject or header:X-MAILER)";
         #endregion
 
-    /// <summary>
-    /// Create a validator from Strings loaded from the config file.
-    /// </summary>
-    /// <param name="description">Test Step description</param>
-    /// <param name="type">Validation type</param>
-    /// <param name="assertion">Assertion type</param>
-    /// <param name="expectedValue">Value to to be comparing with</param>
-    /// <exception cref="Exception">Returns an exception if the test step configuration is invalid.</exception>
+        /// <summary>
+        /// Create a validator from Strings loaded from the config file.
+        /// </summary>
+        /// <param name="description">Test Step description</param>
+        /// <param name="type">Validation type</param>
+        /// <param name="assertion">Assertion type</param>
+        /// <param name="expectedValue">Value to to be comparing with</param>
+        /// <exception cref="Exception">Returns an exception if the test step configuration is invalid.</exception>
         public Validator(TestStep step)
         {
+            _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(Validator).Assembly);
             Description = step.Description;
             Type = EnumValidator.ValidateEnumValue<ValidationType>(StringUtils.FirstCharToUpperString(step.ValidationType.ToLower()));
             ExpectedValue = step.ExpectedValue;
 
             if (string.IsNullOrEmpty(step.Assertion))
             {
-                throw new Exception($"{ERR_MSG_EMPTY_ASSERTION}"); //TODO: Add file and section in md docs.
+                throw new ValidationException($"{ERR_MSG_EMPTY_ASSERTION}"); //TODO: Add file and section in md docs.
             }
 
-            switch(Type)
+            switch (Type)
             {
                 case ValidationType.Field:
                     if (string.IsNullOrEmpty(step.Field))
@@ -72,7 +84,7 @@ namespace YASEM.Core.Validators
                     this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
                     break;
                 default:
-                    throw new Exception($"{ERR_MSG_INVALID_TYPE} ({step.ValidationType})");
+                    throw new ValidationException($"{ERR_MSG_INVALID_TYPE} ({step.ValidationType})");
             }
         }
 
@@ -80,37 +92,31 @@ namespace YASEM.Core.Validators
         {
             ValidationResult result = new ValidationResult();
             //INFO
-            //Console.WriteLine($"\t\tPerforming validation {this.Type} {this.Assertion} {this.Expression}");
-            switch(this.Type)
+            //Console.WriteLine($" 		Performing validation {this.Type} {this.Assertion} {this.Expression}");
+            switch (this.Type)
             {
                 case ValidationType.Content:
 
-                break;
+                    break;
                 case ValidationType.Field:
                     // Pass the already-parsed enum and required values for better decoupling and type safety.
                     FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
                     result = fieldValidator.PerformOn(message);
-                break;
+                    break;
                 case ValidationType.Header:
 
-                break;
+                    break;
                 case ValidationType.Xpath:
 
-                break;
+                    break;
             }
             //DEBUG
-                //Console.WriteLine($"\t\tExpected: {this.ExpectedValue}, Actual: {result.Actual}");
+            //Console.WriteLine($" 		Expected: {this.ExpectedValue}, Actual: {result.Actual}");
             return result;
         }
 
 
     }
 
-    #region ValidationResult
-    public class ValidationResult 
-    {
-        public string Actual {get; set;}  = "" ; //Defaults to empty string
-        public Result Status {get; set;}
-    }
-    #endregion
+
 }

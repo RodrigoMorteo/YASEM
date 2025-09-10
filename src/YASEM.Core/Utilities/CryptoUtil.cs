@@ -2,11 +2,20 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using YASEM.Core.Exceptions;
+using System.Resources;
 
 namespace YASEM.Core.Utilities
 {
     public static class CryptoUtil
     {
+        private static readonly ResourceManager _resourceManager;
+
+        static CryptoUtil()
+        {
+            _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(CryptoUtil).Assembly);
+        }
+
         public static byte[] GenerateKey()
         {
             using (var rng = RandomNumberGenerator.Create())
@@ -43,28 +52,35 @@ namespace YASEM.Core.Utilities
 
         public static string Decrypt(string base64CipherText, byte[] key)
         {
-            byte[] cipherTextBytesWithIv = Convert.FromBase64String(base64CipherText);
-
-            using (Aes aesAlg = Aes.Create())
+            try
             {
-                aesAlg.Key = key;
+                byte[] cipherTextBytesWithIv = Convert.FromBase64String(base64CipherText);
 
-                // Extract IV from the beginning of the ciphertext
-                byte[] iv = new byte[aesAlg.BlockSize / 8];
-                Array.Copy(cipherTextBytesWithIv, 0, iv, 0, iv.Length);
-                aesAlg.IV = iv;
-
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-
-                using (MemoryStream msDecrypt = new MemoryStream())
+                using (Aes aesAlg = Aes.Create())
                 {
-                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Write))
+                    aesAlg.Key = key;
+
+                    // Extract IV from the beginning of the ciphertext
+                    byte[] iv = new byte[aesAlg.BlockSize / 8];
+                    Array.Copy(cipherTextBytesWithIv, 0, iv, 0, iv.Length);
+                    aesAlg.IV = iv;
+
+                    ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                    using (MemoryStream msDecrypt = new MemoryStream())
                     {
-                        // Write ciphertext (excluding IV) to the CryptoStream
-                        csDecrypt.Write(cipherTextBytesWithIv, iv.Length, cipherTextBytesWithIv.Length - iv.Length);
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Write))
+                        {
+                            // Write ciphertext (excluding IV) to the CryptoStream
+                            csDecrypt.Write(cipherTextBytesWithIv, iv.Length, cipherTextBytesWithIv.Length - iv.Length);
+                        }
+                        return Encoding.UTF8.GetString(msDecrypt.ToArray());
                     }
-                    return Encoding.UTF8.GetString(msDecrypt.ToArray());
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new DecryptionException(_resourceManager.GetString("DecryptionError"), ex);
             }
         }
     }

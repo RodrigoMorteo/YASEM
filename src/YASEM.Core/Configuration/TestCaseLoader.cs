@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using YASEM.Core.Interfaces;
 using YASEM.Core.Models;
+using YASEM.Core.Exceptions;
+using System.Resources;
 
 namespace YASEM.Core.Configuration
 {
@@ -11,12 +13,19 @@ namespace YASEM.Core.Configuration
     // Its sole responsibility is now loading and deserializing the test case JSON.
     public class TestCaseLoader : ITestCaseLoader
     {
+        private readonly ResourceManager _resourceManager;
+
+        public TestCaseLoader()
+        {
+            _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(TestCaseLoader).Assembly);
+        }
+
         public async Task<Config> LoadAsync(string jsonPath)
         {
             var fullPath = Path.GetFullPath(jsonPath);
             if (!File.Exists(fullPath))
             {
-                throw new FileNotFoundException("JSON configuration file not found.", fullPath);
+                throw new FileNotFoundException(_resourceManager.GetString("InvalidConfigurationError"), fullPath);
             }
 
             await using var stream = File.OpenRead(fullPath);
@@ -29,7 +38,7 @@ namespace YASEM.Core.Configuration
             }
             catch (JsonException ex)
             {
-                throw new InvalidDataException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
+                throw new InvalidConfigurationException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
             }
         }
     }
