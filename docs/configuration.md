@@ -10,33 +10,39 @@ This file manages general application settings, including mail server connection
 
 ```json
 {
-  "AppConfig": {
-    "Mail": {
-      "Host": "outlook.office365.com",
-      "Port": 993,
-      "UseSsl": true,
-      "Folder": "INBOX",
-      "PollingIntervalSeconds": 10,
-      "MarkFilteredEmailsAsRead": false,
-      "Credentials": {
-        "Address": "user@example.com",
-        "Password": "your-plain-text-password"
-      }
-    },
-    "Report": {
-      "SystemUnderTest": "My Application",
-      "Version": "1.2.3",
-      "Author": "QA Team",
-      "DateTimeFormat": "yyyyMMdd_HHmmss"
-    },
-    "Logging": {
-      "LogLevel": {
-        "Default": "Information"
-      }
+  "MailSettings": {
+    "MailServerType": "pop3",
+    "Server": "mail.domain.com",
+    "Port": 110,
+    "UseSsl": false,
+    "Folder": "INBOX",
+    "Email": "user@mail.domain.com",
+    "Password": {
+      "EncryptedValue": "NSpeOFcyZ6/H0HeHM+JZ5IXvBOG57SE/PQZN9+8jw5g5/3YpZaEGZcPkUhEfwseN"
     }
+  },
+  "ReportSettings": {
+    "SystemUnderTest": "Name of the System Under Test",
+    "Version": "1.0.0",
+    "Author": "Your Name"
   }
 }
 ```
+For more about Encrypted Values please see ()  //TODO: Add link to documentation.
+
+
+### Log Level
+
+The tool uses the ILogger interface from the Microsoft.Extensions.Logging framework. This framework provides the following standard log levels, ordered by severity from lowest to highest:
+
+* Trace
+* Debug
+* Information
+* Warning
+* Error
+* Critical
+
+You can control the verbosity of the log output by changing the Default value in the Logging.LogLevel section of appsettings.json. For example, setting it to "Debug" will show more detailed messages.
 
 ### Test Case Definition (JSON)
 

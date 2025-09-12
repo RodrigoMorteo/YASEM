@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
@@ -15,6 +16,7 @@ using YASEM.Core.Utilities;
 using YASEM.Core.Models;
 using YASEM.Core.Exceptions;
 using static YASEM.Core.Utilities.CryptoUtil;
+using static System.Text.Encoding;
 
 namespace YASEM.CLI
 {
@@ -27,8 +29,8 @@ namespace YASEM.CLI
         private readonly ILogger<Application> _logger;
         private readonly IStringLocalizer<Application> _localizer;
 
-        public Application(ITestCaseLoader testCaseLoader, 
-                           IMailConnector mailConnector, 
+        public Application(ITestCaseLoader testCaseLoader,
+                           IMailConnector mailConnector,
                            IValidationEngineFactory validationEngineFactory,
                            IConfiguration configuration,
                            ILogger<Application> logger,
@@ -40,11 +42,15 @@ namespace YASEM.CLI
             _configuration = configuration;
             _logger = logger;
             _localizer = localizer;
+            CultureInfo.CurrentCulture =
+                CultureInfo.CurrentUICulture =
+                    CultureInfo.GetCultureInfo("en-US"); //TODO: Refactorize localization https://learn.microsoft.com/en-us/dotnet/core/extensions/localization
         }
-        
+
 
         public async Task<int> RunAsync(string[] args)
         {
+            //TODO: Add localization to CLI options
             var jsonPathOption = new Option<FileInfo>("--json-path", "Path to the test case JSON file.");
             var reportPathOption = new Option<string>("--report-path", "Path for the output HTML report.");
             var keyPathOption = new Option<FileInfo>("--key-path", "Path to the encryption key file.");
@@ -70,7 +76,7 @@ namespace YASEM.CLI
                     var jsonPath = context.ParseResult.GetValueForOption(jsonPathOption);
                     var reportPath = context.ParseResult.GetValueForOption(reportPathOption);
 
-                    if (encryptString != null || createKeyFile != null)
+                    if (encryptString != null && ((createKeyFile != null) || (keyPath != null)))
                     {
                         byte[] key = null;
                         string keyFilePath = null;
@@ -80,25 +86,38 @@ namespace YASEM.CLI
                             keyFilePath = createKeyFile.FullName;
                             key = CryptoUtil.GenerateKey();
                             await File.WriteAllBytesAsync(keyFilePath, key);
-                            _logger.LogInformation(_localizer["GeneratedEncryptionKey"], keyFilePath);
+                            //_logger.LogInformation(_localizer["GeneratedEncryptionKey"], keyFilePath);
+                            _logger.LogInformation("Generated encryption key file: {0}", keyFilePath);
+                            keyPath = new FileInfo(keyFilePath);
                         }
                         else if (keyPath != null)
                         {
                             keyFilePath = keyPath.FullName;
                             if (!File.Exists(keyFilePath))
                             {
-                                _logger.LogError(_localizer["Error_KeyFileNotFound"], keyFilePath);
+                                //_logger.LogError(_localizer["Error_KeyFileNotFound"], keyFilePath);
+                                _logger.LogError("Key file not found: {0}", keyFilePath);
                                 context.ExitCode = 1;
                                 return;
                             }
-                            key = await File.ReadAllBytesAsync(keyFilePath);
                         }
+                        if (keyFilePath == null)
+                        {
+                            //_logger.LogError(_localizer["Error_KeyPathRequired"]);
+                            _logger.LogError("Key path is required.");
+                            context.ExitCode = 1;
+                            return;
+                        }
+
+                        //_logger.LogInformation(_localizer["UsingEncryptionKey"], keyFilePath);
+                        _logger.LogInformation("Using encryption key file: {0}", keyFilePath);
+                        key = await File.ReadAllBytesAsync(keyFilePath);
 
                         if (encryptString != null)
                         {
-                            _logger.LogError(_localizer["Error_EncryptRequiresKeyPath"]);
                             string encrypted = CryptoUtil.Encrypt(encryptString, key);
-                            _logger.LogInformation(_localizer["EncryptedString"], encrypted);
+                            //_logger.LogInformation(_localizer["EncryptedString"], encrypted);
+                            _logger.LogInformation("Encrypted string: {0}", encrypted);
                         }
                         context.ExitCode = 0;
                         return;
@@ -106,12 +125,14 @@ namespace YASEM.CLI
 
                     if (jsonPath == null || reportPath == null)
                     {
-                        _logger.LogError(_localizer["Error_JsonPathReportPathRequired"]);
+                        //_logger.LogError(_localizer["Error_JsonPathReportPathRequired"]);
+                        _logger.LogError("JSON path and report path are required.");
                         context.ExitCode = 1;
                         return;
                     }
 
-                    _logger.LogInformation(_localizer["ReceivedRequestToProcess"], jsonPath.FullName);
+                    //_logger.LogInformation(_localizer["ReceivedRequestToProcess"], jsonPath.FullName);
+                    _logger.LogInformation("Received request to process: {0}", jsonPath.FullName);
 
                     var testCase = await _testCaseLoader.LoadAsync(jsonPath.FullName);
 
@@ -128,12 +149,13 @@ namespace YASEM.CLI
 
                     if (mailOptions.Password != null && !string.IsNullOrEmpty(mailOptions.Password.EncryptedValue) && keyPath == null)
                     {
-                        _logger.LogError(_localizer["Error_KeyPathRequiredForEncryptedPassword"]);
+                        //_logger.LogError(_localizer["Error_KeyPathRequiredForEncryptedPassword"]);
+                        _logger.LogError("Key path is required for encrypted password.");
                         context.ExitCode = 1;
                         return;
                     }
-                    byte[] decryptionKey = null;
-                    string decryptedPassword = null;
+                    byte[]? decryptionKey = null;
+                    string? decryptedPassword = null;
 
                     if (mailOptions.Password != null && !string.IsNullOrEmpty(mailOptions.Password.EncryptedValue))
                     {
@@ -141,27 +163,37 @@ namespace YASEM.CLI
                         decryptedPassword = CryptoUtil.Decrypt(mailOptions.Password.EncryptedValue, decryptionKey);
                     }
 
-                    _logger.LogInformation(_localizer["SuccessfullyLoadedTestCase"], config.Name);
+                    //_logger.LogInformation(_localizer["SuccessfullyLoadedTestCase"], config.Name);
+                    _logger.LogInformation("Successfully loaded test case: {0}", config.Name);
 
-                    _logger.LogInformation(_localizer["ConnectingToMailServer"], config.MailOptions.Server);
+                    //_logger.LogInformation(_localizer["ConnectingToMailServer"], config.MailOptions.Server);
+                    _logger.LogInformation("Connecting to mail server: {0}", config.MailOptions.Server);
+
                     var messages = await _mailConnector.ConnectAndRetrieveMessagesAsync(config, decryptedPassword);
-                    _logger.LogInformation(_localizer["EmailsFoundForValidation"], messages.Count);
+                    //_logger.LogInformation(_localizer["EmailsFoundForValidation"], messages.Count);
+                    _logger.LogInformation("Emails found for validation: {0}", messages.Count);
 
                     if (messages.Count == 0)
                     {
-                        throw new NoEmailsFoundException();
+                        //_logger.LogError(_localizer["NoEmailsFound"]);
+                        _logger.LogError("No emails found.");
+                        context.ExitCode = 1;
+                        //throw new NoEmailsFoundException();
                     }
 
                     var validationEngine = _validationEngineFactory.Create(config.TestSteps);
                     var results = validationEngine.Execute(messages);
 
                     // TODO: Process results and generate report
-                    _logger.LogInformation(_localizer["TestExecutionFinished"]);
-                    // TODO: Return a proper exit code based on results
+                    //_logger.LogInformation(_localizer["TestExecutionFinished"]);
+                    _logger.LogInformation("Test execution finished.");
+                    context.ExitCode = 0;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, _localizer["UnexpectedError"], ex.Message);
+                    //_logger.LogError(ex, _localizer["UnexpectedError"], ex.Message);
+                    _logger.LogError("Unexpected error: {0}", ex.Message);
+                    
                     context.ExitCode = 1; // Indicate error
                 }
             });

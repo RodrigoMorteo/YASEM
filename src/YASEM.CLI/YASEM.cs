@@ -66,6 +66,8 @@ namespace YASEM.CLI
                 })
                 .ConfigureLogging((context, logging) =>
                 {
+                    logging.ClearProviders();
+                    logging.AddConfiguration(context.Configuration.GetSection("Logging"));
                     logging.AddConsole();
                     logging.AddDebug();
                     // TODO: Add file logging for comprehensive logging as per plan.md
