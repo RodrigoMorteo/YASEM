@@ -15,6 +15,7 @@ namespace YASEM.CLI.Tests
         private readonly Mock<ITestCaseLoader> _mockTestCaseLoader;
         private readonly Mock<IMailConnector> _mockMailConnector;
         private readonly Mock<IValidationEngineFactory> _mockValidationEngineFactory;
+        private readonly Mock<IReportGenerator> _mockReportGenerator;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<ILogger<Application>> _mockLogger;
         private readonly Mock<IStringLocalizer<Application>> _mockLocalizer;
@@ -24,6 +25,7 @@ namespace YASEM.CLI.Tests
             _mockTestCaseLoader = new Mock<ITestCaseLoader>();
             _mockMailConnector = new Mock<IMailConnector>();
             _mockValidationEngineFactory = new Mock<IValidationEngineFactory>();
+            _mockReportGenerator = new Mock<IReportGenerator>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockLogger = new Mock<ILogger<Application>>();
             _mockLocalizer = new Mock<IStringLocalizer<Application>>();
@@ -37,6 +39,7 @@ namespace YASEM.CLI.Tests
                 _mockTestCaseLoader.Object,
                 _mockMailConnector.Object,
                 _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
                 _mockConfiguration.Object,
                 _mockLogger.Object,
                 _mockLocalizer.Object);
@@ -53,6 +56,7 @@ namespace YASEM.CLI.Tests
                 _mockTestCaseLoader.Object,
                 _mockMailConnector.Object,
                 _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
                 _mockConfiguration.Object,
                 _mockLogger.Object,
                 _mockLocalizer.Object);
@@ -85,6 +89,7 @@ namespace YASEM.CLI.Tests
                 _mockTestCaseLoader.Object,
                 _mockMailConnector.Object,
                 _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
                 _mockConfiguration.Object,
                 _mockLogger.Object,
                 _mockLocalizer.Object);
@@ -119,6 +124,7 @@ namespace YASEM.CLI.Tests
                 _mockTestCaseLoader.Object,
                 _mockMailConnector.Object,
                 _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
                 _mockConfiguration.Object,
                 _mockLogger.Object,
                 _mockLocalizer.Object);

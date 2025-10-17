@@ -25,6 +25,7 @@ namespace YASEM.CLI
         private readonly ITestCaseLoader _testCaseLoader;
         private readonly IMailConnector _mailConnector;
         private readonly IValidationEngineFactory _validationEngineFactory;
+        private readonly IReportGenerator _reportGenerator;
         private readonly IConfiguration _configuration;
         private readonly ILogger<Application> _logger;
         private readonly IStringLocalizer<Application> _localizer;
@@ -32,6 +33,7 @@ namespace YASEM.CLI
         public Application(ITestCaseLoader testCaseLoader,
                            IMailConnector mailConnector,
                            IValidationEngineFactory validationEngineFactory,
+                           IReportGenerator reportGenerator,
                            IConfiguration configuration,
                            ILogger<Application> logger,
                            IStringLocalizer<Application> localizer)
@@ -39,6 +41,7 @@ namespace YASEM.CLI
             _testCaseLoader = testCaseLoader;
             _mailConnector = mailConnector;
             _validationEngineFactory = validationEngineFactory;
+            _reportGenerator = reportGenerator;
             _configuration = configuration;
             _logger = logger;
             _localizer = localizer;
@@ -78,8 +81,8 @@ namespace YASEM.CLI
 
                     if (encryptString != null && ((createKeyFile != null) || (keyPath != null)))
                     {
-                        byte[] key = null;
-                        string keyFilePath = null;
+                        byte[]? key = null;
+                        string? keyFilePath = null;
 
                         if (createKeyFile != null)
                         {
@@ -136,20 +139,15 @@ namespace YASEM.CLI
 
                     var testCase = await _testCaseLoader.LoadAsync(jsonPath.FullName);
 
-                    var mailOptions = new MailOptions();
-                    _configuration.GetSection("MailSettings").Bind(mailOptions);
-
-                    var config = new Config
+                    // If the test case file doesn't specify mail options, load them from appsettings.json
+                    if (testCase.MailOptions == null)
                     {
-                        Name = testCase.Name,
-                        Filters = testCase.Filters,
-                        TestSteps = testCase.TestSteps,
-                        MailOptions = mailOptions
-                    };
+                        testCase.MailOptions = new MailOptions();
+                        _configuration.GetSection("MailSettings").Bind(testCase.MailOptions);
+                    }
 
-                    if (mailOptions.Password != null && !string.IsNullOrEmpty(mailOptions.Password.EncryptedValue) && keyPath == null)
+                    if (testCase.MailOptions.Password != null && !string.IsNullOrEmpty(testCase.MailOptions.Password.EncryptedValue) && keyPath == null)
                     {
-                        //_logger.LogError(_localizer["Error_KeyPathRequiredForEncryptedPassword"]);
                         _logger.LogError("Key path is required for encrypted password.");
                         context.ExitCode = 1;
                         return;
@@ -157,19 +155,17 @@ namespace YASEM.CLI
                     byte[]? decryptionKey = null;
                     string? decryptedPassword = null;
 
-                    if (mailOptions.Password != null && !string.IsNullOrEmpty(mailOptions.Password.EncryptedValue))
+                    if (testCase.MailOptions.Password != null && !string.IsNullOrEmpty(testCase.MailOptions.Password.EncryptedValue))
                     {
                         decryptionKey = await File.ReadAllBytesAsync(keyPath.FullName);
-                        decryptedPassword = CryptoUtil.Decrypt(mailOptions.Password.EncryptedValue, decryptionKey);
+                        decryptedPassword = CryptoUtil.Decrypt(testCase.MailOptions.Password.EncryptedValue, decryptionKey);
                     }
 
-                    //_logger.LogInformation(_localizer["SuccessfullyLoadedTestCase"], config.Name);
-                    _logger.LogInformation("Successfully loaded test case: {0}", config.Name);
+                    _logger.LogInformation("Successfully loaded test case: {0}", testCase.Name);
 
-                    //_logger.LogInformation(_localizer["ConnectingToMailServer"], config.MailOptions.Server);
-                    _logger.LogInformation("Connecting to mail server: {0}", config.MailOptions.Server);
+                    _logger.LogInformation("Connecting to mail server: {0}", testCase.MailOptions!.Server);
 
-                    var messages = await _mailConnector.ConnectAndRetrieveMessagesAsync(config, decryptedPassword);
+                    var messages = await _mailConnector.ConnectAndRetrieveMessagesAsync(testCase, decryptedPassword ?? string.Empty);
                     //_logger.LogInformation(_localizer["EmailsFoundForValidation"], messages.Count);
                     _logger.LogInformation("Emails found for validation: {0}", messages.Count);
 
@@ -181,19 +177,19 @@ namespace YASEM.CLI
                         //throw new NoEmailsFoundException();
                     }
 
-                    var validationEngine = _validationEngineFactory.Create(config.TestSteps);
+                    var validationEngine = _validationEngineFactory.Create(testCase.TestSteps);
                     var results = validationEngine.Execute(messages);
 
-                    // TODO: Process results and generate report
+                    _reportGenerator.Generate(results, reportPath);
+                    _logger.LogInformation("Report generated at {0}", reportPath);
+
                     //_logger.LogInformation(_localizer["TestExecutionFinished"]);
                     _logger.LogInformation("Test execution finished.");
                     context.ExitCode = 0;
                 }
                 catch (Exception ex)
                 {
-                    //_logger.LogError(ex, _localizer["UnexpectedError"], ex.Message);
-                    _logger.LogError("Unexpected error: {0}", ex.Message);
-                    
+                    _logger.LogError(ex, "Unexpected error during application execution.");
                     context.ExitCode = 1; // Indicate error
                 }
             });

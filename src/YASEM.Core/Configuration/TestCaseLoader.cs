@@ -7,6 +7,9 @@ using YASEM.Core.Models;
 using YASEM.Core.Exceptions;
 using System.Resources;
 
+using System.Linq;
+using NJsonSchema;
+
 namespace YASEM.Core.Configuration
 {
         // This class is refactored from ConfigLoader.
@@ -28,13 +31,32 @@ namespace YASEM.Core.Configuration
                 throw new FileNotFoundException(_resourceManager.GetString("InvalidConfigurationError"), fullPath);
             }
 
-            await using var stream = File.OpenRead(fullPath);
+            // Load the schema
+            var schemaPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "test-schema.json");
+            if (!File.Exists(schemaPath))
+            {
+                // This is a development-time error, should not happen in a deployed app
+                throw new FileNotFoundException("Schema file 'test-schema.json' not found in the application's configuration directory.", schemaPath);
+            }
+            var schema = await JsonSchema.FromFileAsync(schemaPath);
+
+            // Read the test case content
+            var jsonContent = await File.ReadAllTextAsync(fullPath);
+
+            // Validate against the schema
+            var validationErrors = schema.Validate(jsonContent);
+            if (validationErrors.Any())
+            {
+                var errorMessages = validationErrors.Select(e => $"{e.Path}: {e.Kind}");
+                var combinedErrorMessage = $"JSON validation failed:{Environment.NewLine}  - " + string.Join($"{Environment.NewLine}  - ", errorMessages);
+                throw new InvalidConfigurationException(combinedErrorMessage);
+            }
+
+            // Deserialize if validation passes
             try
             {
-                // Use System.Text.Json for better performance and to remove Newtonsoft dependency.
-                // Options allow for case-insensitive properties to match the JSON file.
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await JsonSerializer.DeserializeAsync<Config>(stream, options);
+                return JsonSerializer.Deserialize<Config>(jsonContent, options);
             }
             catch (JsonException ex)
             {

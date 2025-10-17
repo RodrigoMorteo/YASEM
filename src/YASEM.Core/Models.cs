@@ -43,7 +43,7 @@ namespace YASEM.Core.Models
         public string? Field { get; set; } // For field/header validations
         public string ValidationType { get; set; } //no default
         public string Assertion { get; set; } //no default
-        public string ExpectedValue { get; set; } //no default
+        public object ExpectedValue { get; set; } //no default
     }
 
     public class Filter

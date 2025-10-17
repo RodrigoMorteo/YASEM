@@ -18,6 +18,8 @@ using YASEM.Core.Models;
 using YASEM.Core.Exceptions;
 using MailKit.Net.Imap; // Added
 using MailKit.Net.Pop3; // Added
+using Serilog;
+using YASEM.Core.Reporting;
 
 namespace YASEM.CLI
 {
@@ -36,12 +38,15 @@ namespace YASEM.CLI
                 var app = host.Services.GetRequiredService<IApplication>();
                 return await app.RunAsync(args);
             }
-            catch (Exception ex) when (ex is MailConnectionException || ex is InvalidConfigurationException || ex is ValidationException || ex is DecryptionException || ex is NoEmailsFoundException)
+            catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine(ex.Message);
-                Console.ResetColor();
+                // Use the static logger here only if the host fails to build.
+                Log.Fatal(ex, "Application terminated unexpectedly");
                 return 1;
+            }
+            finally
+            {
+                await Log.CloseAndFlushAsync();
             }
         }
 
@@ -51,6 +56,11 @@ namespace YASEM.CLI
                 {
                     builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
                 })
+                .UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+                    .MinimumLevel.Debug()
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.File("logs/yasem-main-log.txt", rollingInterval: RollingInterval.Day))
                 .ConfigureServices((context, services) =>
                 {
                     // Register application services with the DI container
@@ -59,7 +69,8 @@ namespace YASEM.CLI
                     services.AddTransient<IMailConnector, EmailConnector>();
                     services.AddTransient<IImapClient, ImapClient>(); // Added
                     services.AddTransient<IPop3Client, Pop3Client>(); // Added
-                    services.AddSingleton<IValidationEngineFactory, ValidationEngineFactory>();
+                    services.AddTransient<IValidationEngineFactory, ValidationEngineFactory>();
+                    services.AddTransient<IReportGenerator, ReportGenerator>();
                     services.Configure<Config>(context.Configuration.GetSection("AppConfig"));
                     services.AddLocalization();
                     // Other services will be registered here.
