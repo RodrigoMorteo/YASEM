@@ -39,7 +39,6 @@ namespace YASEM.Core.Connectors
 
         public async Task ConnectAsync(string protocol, string host, int port, string user, string password, bool useSsl, bool ignoreCertificateErrors)
         {
-            // Set certificate validation callback for both clients if needed
             if (ignoreCertificateErrors)
             {
                 _imapClient.ServerCertificateValidationCallback = (s, c, h, e) => true;
@@ -49,7 +48,6 @@ namespace YASEM.Core.Connectors
             }
             else
             {
-                // Reset to default validation if not ignoring errors
                 _imapClient.ServerCertificateValidationCallback = null;
                 _imapClient.CheckCertificateRevocation = true;
                 _popClient.ServerCertificateValidationCallback = null;
@@ -76,7 +74,7 @@ namespace YASEM.Core.Connectors
             }
             catch (Exception ex)
             {
-                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError"), ex);
+                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError") ?? "An error occurred while connecting to the mail server.", ex);
             }
         }
 
@@ -90,7 +88,6 @@ namespace YASEM.Core.Connectors
                 {
                     case ProtocolType.Pop3:
                         messages.AddRange(await GetMessagesAsync(_popClient));
-                        // Apply client-side filtering for POP3
                         if (filters != null && filters.Any())
                         {
                             messages = ApplyClientSideFilters(messages, filters).ToList();
@@ -106,7 +103,7 @@ namespace YASEM.Core.Connectors
             }
             catch (Exception ex)
             {
-                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError"), ex);
+                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError") ?? "An error occurred while fetching messages.", ex);
             }
         }
 
@@ -143,7 +140,7 @@ namespace YASEM.Core.Connectors
             }
             catch (Exception ex)
             {
-                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError"), ex);
+                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError") ?? "An error occurred while getting messages.", ex);
             }
         }
 
@@ -166,17 +163,12 @@ namespace YASEM.Core.Connectors
             }
             catch (Exception ex)
             {
-                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError"), ex);
+                throw new MailConnectionException(_resourceManager.GetString("MailConnectionError") ?? "An error occurred while getting messages.", ex);
             }
         }
 
-        // Client-side filtering for POP3
         private IEnumerable<MimeMessage> ApplyClientSideFilters(IEnumerable<MimeMessage> messages, List<Filter> filters)
         {
-            // This is a basic client-side filter implementation.
-            // For a robust solution, this would need to be more sophisticated,
-            // potentially reusing logic from BuildSearchQuery or a dedicated FilterEngine.
-            // [Trade-off]: This is a simplified implementation for POP3.
             return messages.Where(m =>
             {
                 bool match = true;
@@ -201,16 +193,13 @@ namespace YASEM.Core.Connectors
                                     }
                                     break;
                                 default:
-                                    // For unsupported fields, we might choose to not filter or throw.
-                                    // For client-side, not filtering is safer.
                                     break;
                             }
                             break;
                         default:
-                            // For unsupported filter types, we might choose to not filter or throw.
                             break;
                     }
-                    if (!match) break; // If any filter doesn't match, stop checking
+                    if (!match) break;
                 }
                 return match;
             });
@@ -223,7 +212,7 @@ namespace YASEM.Core.Connectors
 
             if (filters == null || !filters.Any())
             {
-                return query; // Return SearchQuery.All if no filters
+                return query;
             }
 
             foreach (var filter in filters)
@@ -239,12 +228,10 @@ namespace YASEM.Core.Connectors
                             case "body":
                                 query = query.And(SearchQuery.BodyContains(filter.Value));
                                 break;
-                            // TODO: Implement other field types (recipients, to, from, reply-to, cc, bcc, sentDate, receivedDate, size)
                             default:
                                 throw new NotSupportedException($"Unsupported field filter name: {filter.Name}");
                         }
                         break;
-                    // TODO: Implement other filter types (header, flag)
                     default:
                         throw new NotSupportedException($"Unsupported filter type: {filter.Type}");
                 }
@@ -254,7 +241,6 @@ namespace YASEM.Core.Connectors
 
         public void Dispose()
         {
-            // Dispose the clients if they are connected
             if (_imapClient.IsConnected)
             {
                 _imapClient.Disconnect(true);
@@ -269,6 +255,21 @@ namespace YASEM.Core.Connectors
 
         public async Task<List<MimeMessage>> ConnectAndRetrieveMessagesAsync(Config testCase, string decryptedPassword)
         {
+            if (testCase.MailOptions == null)
+            {
+                throw new InvalidOperationException("MailOptions are not configured in the test case.");
+            }
+
+            if (string.IsNullOrEmpty(testCase.MailOptions.Server))
+            {
+                throw new InvalidOperationException("Mail server is not configured in the test case.");
+            }
+
+            if (string.IsNullOrEmpty(testCase.MailOptions.Email))
+            {
+                throw new InvalidOperationException("Email is not configured in the test case.");
+            }
+
             await ConnectAsync(
                 testCase.MailOptions.MailServerType,
                 testCase.MailOptions.Server,

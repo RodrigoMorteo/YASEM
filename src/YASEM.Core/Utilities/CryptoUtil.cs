@@ -80,7 +80,7 @@ namespace YASEM.Core.Utilities
             }
             catch (Exception ex)
             {
-                throw new DecryptionException(_resourceManager.GetString("DecryptionError"), ex);
+                throw new DecryptionException(_resourceManager.GetString("DecryptionError") ?? "An error occurred during decryption.", ex);
             }
         }
     }

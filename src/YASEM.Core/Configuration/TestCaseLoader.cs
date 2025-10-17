@@ -12,8 +12,6 @@ using NJsonSchema;
 
 namespace YASEM.Core.Configuration
 {
-        // This class is refactored from ConfigLoader.
-    // Its sole responsibility is now loading and deserializing the test case JSON.
     public class TestCaseLoader : ITestCaseLoader
     {
         private readonly ResourceManager _resourceManager;
@@ -31,19 +29,15 @@ namespace YASEM.Core.Configuration
                 throw new FileNotFoundException(_resourceManager.GetString("InvalidConfigurationError"), fullPath);
             }
 
-            // Load the schema
             var schemaPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "test-schema.json");
             if (!File.Exists(schemaPath))
             {
-                // This is a development-time error, should not happen in a deployed app
                 throw new FileNotFoundException("Schema file 'test-schema.json' not found in the application's configuration directory.", schemaPath);
             }
             var schema = await JsonSchema.FromFileAsync(schemaPath);
 
-            // Read the test case content
             var jsonContent = await File.ReadAllTextAsync(fullPath);
 
-            // Validate against the schema
             var validationErrors = schema.Validate(jsonContent);
             if (validationErrors.Any())
             {
@@ -52,11 +46,15 @@ namespace YASEM.Core.Configuration
                 throw new InvalidConfigurationException(combinedErrorMessage);
             }
 
-            // Deserialize if validation passes
             try
             {
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return JsonSerializer.Deserialize<Config>(jsonContent, options);
+                var config = JsonSerializer.Deserialize<Config>(jsonContent, options);
+                if (config == null)
+                {
+                    throw new InvalidConfigurationException($"The JSON file at {fullPath} is empty or invalid.");
+                }
+                return config;
             }
             catch (JsonException ex)
             {
@@ -64,6 +62,4 @@ namespace YASEM.Core.Configuration
             }
         }
     }
-
-    //TODO: check and set defaults
 }

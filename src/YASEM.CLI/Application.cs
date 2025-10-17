@@ -157,7 +157,7 @@ namespace YASEM.CLI
 
                     if (testCase.MailOptions.Password != null && !string.IsNullOrEmpty(testCase.MailOptions.Password.EncryptedValue))
                     {
-                        decryptionKey = await File.ReadAllBytesAsync(keyPath.FullName);
+                        decryptionKey = await File.ReadAllBytesAsync(keyPath!.FullName);
                         decryptedPassword = CryptoUtil.Decrypt(testCase.MailOptions.Password.EncryptedValue, decryptionKey);
                     }
 

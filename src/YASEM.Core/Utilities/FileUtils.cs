@@ -41,6 +41,10 @@ namespace YASEM.Core.Utilities
         }
 
         public static String CheckOrCreatePath(string? filePath){
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ArgumentNullException(nameof(filePath));
+            }
             filePath = CheckOrSetFullyQuallifiedFilePath(filePath); //get fullyquallified path
             filePath = Path.GetDirectoryName(filePath); //get only the fully quallified directory path (remove filename if any)
             if(filePath == null || filePath.Length == 0)

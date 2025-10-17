@@ -55,7 +55,7 @@ namespace YASEM.Core.Validators
             }
             catch (NotSupportedException ex)
             {
-                throw new ValidationException(_resourceManager.GetString("ValidationError"), ex);
+                throw new ValidationException(_resourceManager.GetString("ValidationError") ?? "A validation error occurred.", ex);
             }
         }
     }

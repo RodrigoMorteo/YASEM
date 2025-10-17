@@ -25,7 +25,7 @@ namespace YASEM.Core.Validators
         public string Description { get; }
         public ValidationType Type { get; }
         public AssertionType Assertion { get; }
-        public string ExpectedValue { get; }
+        public string? ExpectedValue { get; }
         public List<string> ExpectedValues { get; } = new List<string>();
         public string Expression { get; } = "";
         private EmailField Field = new EmailField();
@@ -38,14 +38,6 @@ namespace YASEM.Core.Validators
         const string ERR_MSG_INVALID_FIELD_STRUCTURE = "Validator of types field and header must contain the name of the element of validation in the for ValidatorType:Element (i.e. field:subject or header:X-MAILER)";
         #endregion
 
-        /// <summary>
-        /// Create a validator from Strings loaded from the config file.
-        /// </summary>
-        /// <param name="description">Test Step description</param>
-        /// <param name="type">Validation type</param>
-        /// <param name="assertion">Assertion type</param>
-        /// <param name="expectedValue">Value to to be comparing with</param>
-        /// <exception cref="Exception">Returns an exception if the test step configuration is invalid.</exception>
         public Validator(TestStep step)
         {
             if (string.IsNullOrEmpty(step.ValidationType))
@@ -56,7 +48,7 @@ namespace YASEM.Core.Validators
             _resourceManager = new ResourceManager("YASEM.Core.Resources.ErrorMessages", typeof(Validator).Assembly);
             Description = step.Description;
             Type = EnumValidator.ValidateEnumValue<ValidationType>(StringUtils.FirstCharToUpperString(step.ValidationType.ToLower()));
-            ExpectedValue = step.ExpectedValue.ToString();
+            ExpectedValue = step.ExpectedValue?.ToString();
 
             if (string.IsNullOrEmpty(step.Assertion))
             {
@@ -92,13 +84,24 @@ namespace YASEM.Core.Validators
                     break;
                 case ValidationType.Bulk:
                     this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
-                    try
+                    if (step.ExpectedValue != null)
                     {
-                        ExpectedValues = JsonSerializer.Deserialize<List<string>>(step.ExpectedValue.ToString());
-                    }
-                    catch (JsonException ex)
-                    {
-                        throw new InvalidConfigurationException($"For bulk validation, the 'expectedValue' must be a valid JSON array of strings. Details: {ex.Message}", ex);
+                        try
+                        {
+                            var json = step.ExpectedValue.ToString();
+                            if (!string.IsNullOrEmpty(json))
+                            {
+                                var values = JsonSerializer.Deserialize<List<string>>(json);
+                                if (values != null)
+                                {
+                                    ExpectedValues = values;
+                                }
+                            }
+                        }
+                        catch (JsonException ex)
+                        {
+                            throw new InvalidConfigurationException($"For bulk validation, the 'expectedValue' must be a valid JSON array of strings. Details: {ex.Message}", ex);
+                        }
                     }
                     break;
                 case ValidationType.Attachment:
@@ -117,37 +120,44 @@ namespace YASEM.Core.Validators
             switch (this.Type)
             {
                 case ValidationType.Content:
-                    ContentValidator contentValidator = new ContentValidator(this.Assertion, this.ExpectedValue);
-                    result = contentValidator.PerformOn(message);
+                    if (this.ExpectedValue != null)
+                    {
+                        ContentValidator contentValidator = new ContentValidator(this.Assertion, this.ExpectedValue);
+                        result = contentValidator.PerformOn(message);
+                    }
                     break;
                 case ValidationType.Field:
-                    // Pass the already-parsed enum and required values for better decoupling and type safety.
-                    FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
-                    result = fieldValidator.PerformOn(message);
+                    if (this.ExpectedValue != null)
+                    {
+                        FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
+                        result = fieldValidator.PerformOn(message);
+                    }
                     break;
                 case ValidationType.Header:
 
                     break;
                 case ValidationType.Xpath:
-                    XPathValidator xpathValidator = new XPathValidator(this.Expression, this.Assertion, this.ExpectedValue);
-                    result = xpathValidator.PerformOn(message);
+                    if (this.ExpectedValue != null)
+                    {
+                        XPathValidator xpathValidator = new XPathValidator(this.Expression, this.Assertion, this.ExpectedValue);
+                        result = xpathValidator.PerformOn(message);
+                    }
                     break;
                 case ValidationType.Bulk:
                     BulkValidator bulkValidator = new BulkValidator(this.Assertion, this.ExpectedValues);
                     result = bulkValidator.PerformOn(message);
                     break;
                 case ValidationType.Attachment:
-                    AttachmentValidator attachmentValidator = new AttachmentValidator(this.Assertion, this.ExpectedValue);
-                    result = attachmentValidator.PerformOn(message);
+                    if (this.ExpectedValue != null)
+                    {
+                        AttachmentValidator attachmentValidator = new AttachmentValidator(this.Assertion, this.ExpectedValue);
+                        result = attachmentValidator.PerformOn(message);
+                    }
                     break;
             }
             //DEBUG
             //Console.WriteLine($" 		Expected: {this.ExpectedValue}, Actual: {result.Actual}");
             return result;
         }
-
-
     }
-
-
 }
