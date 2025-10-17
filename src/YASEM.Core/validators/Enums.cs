@@ -13,6 +13,7 @@ namespace YASEM.Core.Validators
     {
         Subject,
         Sender,
+        From,
         Recipient,
         Cc,
         Bcc,

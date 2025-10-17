@@ -29,25 +29,26 @@ namespace YASEM.Core.Validators
             switch(_field) //get the actual value from the selected email field
             {
                 case EmailField.Subject:
-                    result.Actual = message.Subject;
+                    result.Actual = message.Subject ?? string.Empty;
                 break;
-                case EmailField.Sender:
-                    result.Actual = message.Sender.ToString();
+                case EmailField.Sender: // Fall-through to From, as From is what users typically mean by sender.
+                case EmailField.From:
+                    result.Actual = message.From?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Recipient:
-                    result.Actual = message.To.ToString();
+                    result.Actual = message.To?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Cc:
-                    result.Actual = message.Cc.ToString();
+                    result.Actual = message.Cc?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Bcc:
-                    result.Actual = message.Bcc.ToString();
+                    result.Actual = message.Bcc?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Attachments:
                     result.Actual = message.Attachments.Count().ToString();
                 break;
                 case EmailField.Body:
-                    result.Actual = message.TextBody;
+                    result.Actual = message.TextBody ?? string.Empty;
                 break;
                 default:
                     // This case should be unreachable if the Validator constructor does its job.

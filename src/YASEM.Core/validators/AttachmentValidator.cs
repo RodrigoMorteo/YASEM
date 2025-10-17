@@ -36,18 +36,18 @@ namespace YASEM.Core.Validators
                     result.Actual = message.Attachments.Count().ToString();
                     break;
                 case AssertionType.Contains:
-                    if (message.Attachments.Any(a => a.ContentType.Name.Contains(_expectedValue)))
+                    if (message.Attachments.Any(a => a.ContentType?.Name.Contains(_expectedValue) == true))
                     {
                         result.Status = Result.Pass;
                     }
-                    result.Actual = string.Join(", ", message.Attachments.Select(a => a.ContentType.Name));
+                    result.Actual = string.Join(", ", message.Attachments.Select(a => a.ContentType?.Name ?? ""));
                     break;
                 case AssertionType.Notcontains:
-                    if (!message.Attachments.Any(a => a.ContentType.Name.Contains(_expectedValue)))
+                    if (!message.Attachments.Any(a => a.ContentType?.Name.Contains(_expectedValue) == true))
                     {
                         result.Status = Result.Pass;
                     }
-                    result.Actual = string.Join(", ", message.Attachments.Select(a => a.ContentType.Name));
+                    result.Actual = string.Join(", ", message.Attachments.Select(a => a.ContentType?.Name ?? ""));
                     break;
             }
 
