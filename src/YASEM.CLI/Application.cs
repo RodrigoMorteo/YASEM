@@ -65,7 +65,7 @@ namespace YASEM.CLI
             rootCommand.AddOption(jsonPathOption);
             rootCommand.AddOption(reportPathOption);
             rootCommand.AddOption(keyPathOption);
-            rootCommand.AddOption(timeoutOption);
+            rootCommand.AddOption(timeoutOption);  //TODO: implement timeout option for email retrieval
             rootCommand.AddOption(encryptOption);
             rootCommand.AddOption(createKeyFileOption);
 

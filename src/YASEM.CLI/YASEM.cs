@@ -32,21 +32,24 @@ namespace YASEM.CLI
     {
         public static async Task<int> Main(string[] args)
         {
+            int exitCode = 1;
             try
             {
                 var host = CreateHostBuilder(args).Build();
                 var app = host.Services.GetRequiredService<IApplication>();
-                return await app.RunAsync(args);
+                exitCode = await app.RunAsync(args);
+                return exitCode;
             }
             catch (Exception ex)
             {
                 // Use the static logger here only if the host fails to build.
                 Log.Fatal(ex, "Application terminated unexpectedly");
-                return 1;
+                return exitCode;
             }
             finally
             {
                 await Log.CloseAndFlushAsync();
+
             }
         }
 

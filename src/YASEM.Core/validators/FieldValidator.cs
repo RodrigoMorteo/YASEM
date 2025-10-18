@@ -24,6 +24,11 @@ namespace YASEM.Core.Validators
         public ValidationResult PerformOn(MimeMessage message)
         {
             ValidationResult result = new ValidationResult();
+            if (message == null)
+            {
+                result.Status = Result.Fail;
+                return result;
+            }
             
             // Switch on the strongly-typed enum, not a fragile string.
             switch(_field) //get the actual value from the selected email field
@@ -88,7 +93,7 @@ namespace YASEM.Core.Validators
 
         private Result Contains(string expected, string actual) 
         {
-            return actual.Contains(expected)? Result.Pass: Result.Fail; 
+            return actual.Contains(expected, StringComparison.OrdinalIgnoreCase)? Result.Pass: Result.Fail; 
         } 
 
         private Result ExistsOnce(string expected, string actual) 

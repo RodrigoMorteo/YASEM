@@ -34,20 +34,20 @@ namespace YASEM.Core.Validators
                     //INFO
                     Console.WriteLine($"\t[{res.Status.ToString().ToUpper()}] Step: {validator.Description}");//INFO
                     if(res.Status != Result.Pass)
-                        //TODO: WARN
+                        //TODO: Add logger WARN
                         Console.WriteLine($"\t\tExpected: {validator.ExpectedValue} Actual: {res.Actual}");
                 }
             }
-            //TODO: INFO log
-            //Console.WriteLine($"{INFO_MSG_FINISHED}");
+            //TODO: Add logger INFO
+            Console.WriteLine($"{INFO_MSG_FINISHED}");
             
             return results;
         }
         private void AddStep(TestStep step) 
         {
-            //TODO: INFO 
+            //TODO: Add logger INFO 
             Console.WriteLine($"Step: {step.Description}" );
-            //TODO: DEBUG
+            //TODO: Replace by logger DEBUG
             Console.WriteLine($"\tCreating Validator of type {step.ValidationType} for field '{step.Field ?? "N/A"}' with assertion '{step.Assertion}' and expected value '{step.ExpectedValue}'.");
             try
             {

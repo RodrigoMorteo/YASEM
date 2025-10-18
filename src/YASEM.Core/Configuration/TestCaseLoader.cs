@@ -38,12 +38,19 @@ namespace YASEM.Core.Configuration
 
             var jsonContent = await File.ReadAllTextAsync(fullPath);
 
-            var validationErrors = schema.Validate(jsonContent);
-            if (validationErrors.Any())
+            try
             {
-                var errorMessages = validationErrors.Select(e => $"{e.Path}: {e.Kind}");
-                var combinedErrorMessage = $"JSON validation failed:{Environment.NewLine}  - " + string.Join($"{Environment.NewLine}  - ", errorMessages);
-                throw new InvalidConfigurationException(combinedErrorMessage);
+                var validationErrors = schema.Validate(jsonContent);
+                if (validationErrors.Any())
+                {
+                    var errorMessages = validationErrors.Select(e => $"{e.Path}: {e.Kind}");
+                    var combinedErrorMessage = $"JSON validation failed:{Environment.NewLine}  - " + string.Join($"{Environment.NewLine}  - ", errorMessages);
+                    throw new InvalidConfigurationException(combinedErrorMessage);
+                }
+            }
+            catch (Newtonsoft.Json.JsonReaderException ex)
+            {
+                throw new InvalidConfigurationException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
             }
 
             try
@@ -56,7 +63,7 @@ namespace YASEM.Core.Configuration
                 }
                 return config;
             }
-            catch (JsonException ex)
+            catch (Newtonsoft.Json.JsonReaderException ex)
             {
                 throw new InvalidConfigurationException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
             }

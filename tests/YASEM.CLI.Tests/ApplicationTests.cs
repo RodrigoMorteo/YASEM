@@ -135,5 +135,53 @@ namespace YASEM.CLI.Tests
             // Assert
             Assert.NotEqual(0, exitCode);
         }
+        [Fact]
+        public async Task RunAsync_WithTimeoutOption_ShouldReturnSuccess()
+        {
+            // Arrange
+            var app = new Application(
+                _mockTestCaseLoader.Object,
+                _mockMailConnector.Object,
+                _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
+                _mockConfiguration.Object,
+                _mockLogger.Object,
+                _mockLocalizer.Object);
+
+            // Act
+            var exitCode = await app.RunAsync(new[]
+            {
+                "--json-path", "test.json",
+                "--key-path", "/home/rod/repos/YASEM/my.key",
+                "--report-path", "report.html",
+                "--timeout", "10"
+            });
+
+            // Assert
+            Assert.Equal(0, exitCode);
+        }
+
+        [Fact]
+        public async Task RunAsync_WithHelpOption_ShouldReturnSuccess()
+        {
+            // Arrange
+            var app = new Application(
+                _mockTestCaseLoader.Object,
+                _mockMailConnector.Object,
+                _mockValidationEngineFactory.Object,
+                _mockReportGenerator.Object,
+                _mockConfiguration.Object,
+                _mockLogger.Object,
+                _mockLocalizer.Object);
+
+            // Act
+            var exitCode = await app.RunAsync(new[]
+            {
+                "--help"
+            });
+
+            // Assert
+            Assert.Equal(0, exitCode);
+        }
     }
-}
+}   

@@ -16,11 +16,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/YASEM.Core/YASEM.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\YASEM.Core\YASEM.Core.csproj" />
   </ItemGroup>
 
 </Project>
