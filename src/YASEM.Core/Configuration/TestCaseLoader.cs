@@ -7,10 +7,11 @@ using YASEM.Core.Models;
 using YASEM.Core.Exceptions;
 using System.Resources;
 
+using System.Linq;
+using NJsonSchema;
+
 namespace YASEM.Core.Configuration
 {
-        // This class is refactored from ConfigLoader.
-    // Its sole responsibility is now loading and deserializing the test case JSON.
     public class TestCaseLoader : ITestCaseLoader
     {
         private readonly ResourceManager _resourceManager;
@@ -28,20 +29,44 @@ namespace YASEM.Core.Configuration
                 throw new FileNotFoundException(_resourceManager.GetString("InvalidConfigurationError"), fullPath);
             }
 
-            await using var stream = File.OpenRead(fullPath);
+            var schemaPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "test-schema.json");
+            if (!File.Exists(schemaPath))
+            {
+                throw new FileNotFoundException("Schema file 'test-schema.json' not found in the application's configuration directory.", schemaPath);
+            }
+            var schema = await JsonSchema.FromFileAsync(schemaPath);
+
+            var jsonContent = await File.ReadAllTextAsync(fullPath);
+
             try
             {
-                // Use System.Text.Json for better performance and to remove Newtonsoft dependency.
-                // Options allow for case-insensitive properties to match the JSON file.
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await JsonSerializer.DeserializeAsync<Config>(stream, options);
+                var validationErrors = schema.Validate(jsonContent);
+                if (validationErrors.Any())
+                {
+                    var errorMessages = validationErrors.Select(e => $"{e.Path}: {e.Kind}");
+                    var combinedErrorMessage = $"JSON validation failed:{Environment.NewLine}  - " + string.Join($"{Environment.NewLine}  - ", errorMessages);
+                    throw new InvalidConfigurationException(combinedErrorMessage);
+                }
             }
-            catch (JsonException ex)
+            catch (Newtonsoft.Json.JsonReaderException ex)
+            {
+                throw new InvalidConfigurationException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
+            }
+
+            try
+            {
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var config = JsonSerializer.Deserialize<Config>(jsonContent, options);
+                if (config == null)
+                {
+                    throw new InvalidConfigurationException($"The JSON file at {fullPath} is empty or invalid.");
+                }
+                return config;
+            }
+            catch (Newtonsoft.Json.JsonReaderException ex)
             {
                 throw new InvalidConfigurationException($"Error deserializing JSON file at {fullPath}. Details: {ex.Message}", ex);
             }
         }
     }
-
-    //TODO: check and set defaults
 }

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace YASEM.Core.Validators
 {
-    class FieldValidator 
+    public class FieldValidator 
     {
         #region MESSAGES
         const string ERR_MSG_INVALID_FIELD = "ERROR: Invalid field type passed. Check the documentation for available field types and correct the field name:";
@@ -24,30 +24,45 @@ namespace YASEM.Core.Validators
         public ValidationResult PerformOn(MimeMessage message)
         {
             ValidationResult result = new ValidationResult();
+            if (message == null)
+            {
+                result.Status = Result.Fail;
+                return result;
+            }
             
             // Switch on the strongly-typed enum, not a fragile string.
             switch(_field) //get the actual value from the selected email field
             {
                 case EmailField.Subject:
-                    result.Actual = message.Subject;
+                    result.Actual = message.Subject ?? string.Empty;
                 break;
                 case EmailField.Sender:
-                    result.Actual = message.Sender.ToString();
+                case EmailField.From:
+                    result.Actual = message.From?.ToString() ?? string.Empty;
                 break;
-                case EmailField.Recipient:
-                    result.Actual = message.To.ToString();
+                case EmailField.To:
+                    result.Actual = message.To?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Cc:
-                    result.Actual = message.Cc.ToString();
+                    result.Actual = message.Cc?.ToString() ?? string.Empty;
                 break;
                 case EmailField.Bcc:
-                    result.Actual = message.Bcc.ToString();
+                    result.Actual = message.Bcc?.ToString() ?? string.Empty;
                 break;
-                case EmailField.Attachments:
-                    result.Actual = message.Attachments.Count().ToString();
+                case EmailField.ReplyTo:
+                    result.Actual = message.ReplyTo?.ToString() ?? string.Empty;
                 break;
-                case EmailField.Body:
-                    result.Actual = message.TextBody;
+                case EmailField.Date:
+                    result.Actual = message.Date.ToString();
+                break;
+                case EmailField.MessageId:
+                    result.Actual = message.MessageId?.ToString() ?? string.Empty;
+                break;
+                case EmailField.InReplyTo:
+                    result.Actual = message.InReplyTo?.ToString() ?? string.Empty;
+                break;
+                case EmailField.References:
+                    result.Actual = message.References?.ToString() ?? string.Empty;
                 break;
                 default:
                     // This case should be unreachable if the Validator constructor does its job.
@@ -78,7 +93,7 @@ namespace YASEM.Core.Validators
 
         private Result Contains(string expected, string actual) 
         {
-            return actual.Contains(expected)? Result.Pass: Result.Fail; 
+            return actual.Contains(expected, StringComparison.OrdinalIgnoreCase)? Result.Pass: Result.Fail; 
         } 
 
         private Result ExistsOnce(string expected, string actual) 

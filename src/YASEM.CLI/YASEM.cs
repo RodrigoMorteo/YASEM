@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Debug;
 using YASEM.CLI;
 using YASEM.Core.Configuration;
 using YASEM.Core.Interfaces;
@@ -14,6 +18,8 @@ using YASEM.Core.Models;
 using YASEM.Core.Exceptions;
 using MailKit.Net.Imap; // Added
 using MailKit.Net.Pop3; // Added
+using Serilog;
+using YASEM.Core.Reporting;
 
 namespace YASEM.CLI
 {
@@ -26,18 +32,24 @@ namespace YASEM.CLI
     {
         public static async Task<int> Main(string[] args)
         {
+            int exitCode = 1;
             try
             {
                 var host = CreateHostBuilder(args).Build();
                 var app = host.Services.GetRequiredService<IApplication>();
-                return await app.RunAsync(args);
+                exitCode = await app.RunAsync(args);
+                return exitCode;
             }
-            catch (Exception ex) when (ex is MailConnectionException || ex is InvalidConfigurationException || ex is ValidationException || ex is DecryptionException || ex is NoEmailsFoundException)
+            catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine(ex.Message);
-                Console.ResetColor();
-                return 1;
+                // Use the static logger here only if the host fails to build.
+                Log.Fatal(ex, "Application terminated unexpectedly");
+                return exitCode;
+            }
+            finally
+            {
+                await Log.CloseAndFlushAsync();
+
             }
         }
 
@@ -47,6 +59,11 @@ namespace YASEM.CLI
                 {
                     builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
                 })
+                .UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+                    .MinimumLevel.Debug()
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.File("logs/yasem-main-log.txt", rollingInterval: RollingInterval.Day))
                 .ConfigureServices((context, services) =>
                 {
                     // Register application services with the DI container
@@ -55,9 +72,19 @@ namespace YASEM.CLI
                     services.AddTransient<IMailConnector, EmailConnector>();
                     services.AddTransient<IImapClient, ImapClient>(); // Added
                     services.AddTransient<IPop3Client, Pop3Client>(); // Added
-                    services.AddSingleton<IValidationEngineFactory, ValidationEngineFactory>();
+                    services.AddTransient<IValidationEngineFactory, ValidationEngineFactory>();
+                    services.AddTransient<IReportGenerator, ReportGenerator>();
                     services.Configure<Config>(context.Configuration.GetSection("AppConfig"));
+                    services.AddLocalization();
                     // Other services will be registered here.
+                })
+                .ConfigureLogging((context, logging) =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConfiguration(context.Configuration.GetSection("Logging"));
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    // TODO: Add file logging for comprehensive logging as per plan.md
                 });
     }
 }

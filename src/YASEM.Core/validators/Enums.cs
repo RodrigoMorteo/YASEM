@@ -5,25 +5,45 @@ namespace YASEM.Core.Validators
         Field, //related to EmailField enum
         Content,
         Header,
-        Xpath
+        Xpath,
+        Bulk,
+        Attachment
     }
     public enum EmailField
     {
         Subject,
         Sender,
-        Recipient,
+        From,
+        To,
         Cc,
         Bcc,
-        Attachments,
-        Body
+        ReplyTo,
+        Date,
+        MessageId,
+        InReplyTo,
+        References
+    }
+
+    public enum MessagePart
+    {
+        Body,
+        Attachments
     }
     public enum AssertionType
     {
         Contains,
+        Notcontains,
+        Equals,
+        Notequals,
         Exists_once,
         Exists_many,
         Does_not_exist,
-        Expression
+        Expression,
+        Regexmatch,
+        Eachwith,
+        Anywith,
+        Exists,
+        Notexists
     }
 
     /// <summary>

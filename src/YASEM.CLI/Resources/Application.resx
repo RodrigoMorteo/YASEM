@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:Is='DataSet'>
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="xml:space" type="xsd:string" msdata:Space="preserve" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Error_KeyFileNotFound" xml:space="preserve">
+    <value>Key file not found at: {0}</value>
+  </data>
+  <data name="Error_EncryptRequiresKeyPath" xml:space="preserve">
+    <value>Error: Encryption requires a key path.</value>
+  </data>
+  <data name="Error_JsonPathReportPathRequired" xml:space="preserve">
+    <value>Error: --json-path and --report-path are required for a test run.</value>
+  </data>
+  <data name="Error_KeyPathRequiredForEncryptedPassword" xml:space="preserve">
+    <value>Error: --key-path is required for a test run with an encrypted password.</value>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>An unexpected error occurred: {0}</value>
+  </data>
+  <data name="GeneratedEncryptionKey" xml:space="preserve">
+    <value>Generated new encryption key at: {0}</value>
+  </data>
+  <data name="EncryptedString" xml:space="preserve">
+    <value>Encrypted string: {0}</value>
+  </data>
+  <data name="ReceivedRequestToProcess" xml:space="preserve">
+    <value>Received request to process: {0}</value>
+  </data>
+  <data name="SuccessfullyLoadedTestCase" xml:space="preserve">
+    <value>Successfully loaded test case: {0}</value>
+  </data>
+  <data name="ConnectingToMailServer" xml:space="preserve">
+    <value>Connecting to {0} to retrieve emails...</value>
+  </data>
+  <data name="EmailsFoundForValidation" xml:space="preserve">
+    <value>{0} email(s) found for validation.</value>
+  </data>
+  <data name="TestExecutionFinished" xml:space="preserve">
+    <value>Test execution finished!</value>
+  </data>
+  <data name="Option_JsonPathDescription" xml:space="preserve">
+    <value>Path to the test case JSON file.</value>
+  </data>
+  <data name="Option_ReportPathDescription" xml:space="preserve">
+    <value>Path for the output HTML report.</value>
+  </data>
+  <data name="Option_KeyPathDescription" xml:space="preserve">
+    <value>Path to the encryption key file.</value>
+  </data>
+  <data name="Option_TimeoutDescription" xml:space="preserve">
+    <value>Number of seconds to wait for test emails to arrive.</value>
+  </data>
+  <data name="Option_EncryptDescription" xml:space="preserve">
+    <value>Utility function. Encrypts the given string.</value>
+  </data>
+  <data name="Option_CreateKeyFileDescription" xml:space="preserve">
+    <value>Utility function. Generates a new random encryption key file.</value>
+  </data>
+  <data name="RootCommand_Description" xml:space="preserve">
+    <value>YASEM: Yet Another Simple Email Multiplatform Test Automation Tool</value>
+  </data>
+</root>

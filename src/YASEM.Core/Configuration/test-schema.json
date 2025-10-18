@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YASEM Test Case",
+  "type": "object",
+  "required": [
+    "Id",
+    "Name",
+    "TestSteps"
+  ],
+  "properties": {
+    "Id": { "type": "string" },
+    "Name": { "type": "string" },
+    "Author": { "type": "string" },
+    "Environment": { "type": "string" },
+    "MailOptions": { "$ref": "#/definitions/MailOptions" },
+    "TestSteps": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TestStep" }
+    },
+    "Filters": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Filter" }
+    }
+  },
+  "definitions": {
+    "MailOptions": {
+      "type": "object",
+      "properties": {
+        "MailServerType": { "type": "string" },
+        "Server": { "type": "string" },
+        "Port": { "type": "integer" },
+        "UseSsl": { "type": "boolean" },
+        "Email": { "type": "string" },
+        "Password": {
+          "type": "object",
+          "properties": {
+            "EncryptedValue": { "type": "string" }
+          },
+          "required": ["EncryptedValue"]
+        }
+      },
+      "required": ["Server", "Email", "Password"]
+    },
+    "TestStep": {
+      "type": "object",
+      "required": [
+        "Description",
+        "ValidationType",
+        "Assertion",
+        "ExpectedValue"
+      ],
+      "properties": {
+        "Description": { "type": "string" },
+        "Field": { "type": "string" },
+        "ValidationType": { "type": "string" },
+        "Assertion": { "type": "string" },
+        "ExpectedValue": {}
+      },
+      "oneOf": [
+        { "required": ["Field"] },
+        { "required": ["Part"] }
+      ]
+    },
+    "Filter": {
+      "type": "object",
+      "required": ["Type", "Name", "Value"],
+      "properties": {
+        "Type": { "type": "string" },
+        "Name": { "type": "string" },
+        "Value": { "type": "string" }
+      }
+    },
+    "EmailField": {
+      "type": "string",
+      "enum": [
+        "Subject",
+        "Sender",
+        "From",
+        "To",
+        "Cc",
+        "Bcc",
+        "ReplyTo",
+        "Date",
+        "MessageId",
+        "InReplyTo",
+        "References"
+      ]
+    },
+    "MessagePart": {
+      "type": "string",
+      "enum": [
+        "Body",
+        "Attachments"
+      ]
+    }
+  }
+}
