@@ -14,11 +14,20 @@ namespace YASEM.Core.Validators
         Subject,
         Sender,
         From,
-        Recipient,
+        To,
         Cc,
         Bcc,
-        Attachments,
-        Body
+        ReplyTo,
+        Date,
+        MessageId,
+        InReplyTo,
+        References
+    }
+
+    public enum MessagePart
+    {
+        Body,
+        Attachments
     }
     public enum AssertionType
     {

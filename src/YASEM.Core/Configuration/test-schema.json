@@ -55,7 +55,11 @@
         "ValidationType": { "type": "string" },
         "Assertion": { "type": "string" },
         "ExpectedValue": {}
-      }
+      },
+      "oneOf": [
+        { "required": ["Field"] },
+        { "required": ["Part"] }
+      ]
     },
     "Filter": {
       "type": "object",
@@ -65,6 +69,29 @@
         "Name": { "type": "string" },
         "Value": { "type": "string" }
       }
+    },
+    "EmailField": {
+      "type": "string",
+      "enum": [
+        "Subject",
+        "Sender",
+        "From",
+        "To",
+        "Cc",
+        "Bcc",
+        "ReplyTo",
+        "Date",
+        "MessageId",
+        "InReplyTo",
+        "References"
+      ]
+    },
+    "MessagePart": {
+      "type": "string",
+      "enum": [
+        "Body",
+        "Attachments"
+      ]
     }
   }
 }

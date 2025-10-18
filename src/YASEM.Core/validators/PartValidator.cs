@@ -4,19 +4,19 @@ using System.Text.RegularExpressions;
 
 namespace YASEM.Core.Validators
 {
-    public class FieldValidator 
+    public class PartValidator 
     {
         #region MESSAGES
-        const string ERR_MSG_INVALID_FIELD = "ERROR: Invalid field type passed. Check the documentation for available field types and correct the field name:";
+        const string ERR_MSG_INVALID_PART = "ERROR: Invalid part type passed. Check the documentation for available part types and correct the part name:";
         const string ERR_MSG_INVALID_ASSERTION = "ERROR: Invalid assertion type passed. Check the documentation for available assertions.";
         #endregion
-        private readonly EmailField _field;
+        private readonly MessagePart _part;
         private readonly AssertionType _assertion;
         private readonly string _expectedValue;
 
-        public FieldValidator(EmailField field, AssertionType assertion, string expectedValue)
+        public PartValidator(MessagePart part, AssertionType assertion, string expectedValue)
         {
-            _field = field;
+            _part = part;
             _assertion = assertion;
             _expectedValue = expectedValue;
         }
@@ -25,43 +25,16 @@ namespace YASEM.Core.Validators
         {
             ValidationResult result = new ValidationResult();
             
-            // Switch on the strongly-typed enum, not a fragile string.
-            switch(_field) //get the actual value from the selected email field
+            switch(_part) //get the actual value from the selected email part
             {
-                case EmailField.Subject:
-                    result.Actual = message.Subject ?? string.Empty;
+                case MessagePart.Body:
+                    result.Actual = message.TextBody ?? string.Empty;
                 break;
-                case EmailField.Sender:
-                case EmailField.From:
-                    result.Actual = message.From?.ToString() ?? string.Empty;
-                break;
-                case EmailField.To:
-                    result.Actual = message.To?.ToString() ?? string.Empty;
-                break;
-                case EmailField.Cc:
-                    result.Actual = message.Cc?.ToString() ?? string.Empty;
-                break;
-                case EmailField.Bcc:
-                    result.Actual = message.Bcc?.ToString() ?? string.Empty;
-                break;
-                case EmailField.ReplyTo:
-                    result.Actual = message.ReplyTo?.ToString() ?? string.Empty;
-                break;
-                case EmailField.Date:
-                    result.Actual = message.Date.ToString();
-                break;
-                case EmailField.MessageId:
-                    result.Actual = message.MessageId?.ToString() ?? string.Empty;
-                break;
-                case EmailField.InReplyTo:
-                    result.Actual = message.InReplyTo?.ToString() ?? string.Empty;
-                break;
-                case EmailField.References:
-                    result.Actual = message.References?.ToString() ?? string.Empty;
+                case MessagePart.Attachments:
+                    result.Actual = message.Attachments.Count().ToString();
                 break;
                 default:
-                    // This case should be unreachable if the Validator constructor does its job.
-                    throw new InvalidOperationException($"{ERR_MSG_INVALID_FIELD} {_field}");
+                    throw new InvalidOperationException($"{ERR_MSG_INVALID_PART} {_part}");
             }
 
             switch(_assertion) //perform the selected assertion with the expected value on the actual value
@@ -78,7 +51,6 @@ namespace YASEM.Core.Validators
                 case AssertionType.Does_not_exist:
                     result.Status = DoesNotExist(_expectedValue, result.Actual);
                 break;
-                // case AssertionType.Expression: //Field validations do not implement Expression assertions as they are reserved for the XPATH validation type only.
                 default:
                 throw new InvalidOperationException($"{ERR_MSG_INVALID_ASSERTION}. Check the Assertion field with the value \"{_assertion}\" in your JSON file.");
             }
@@ -92,7 +64,7 @@ namespace YASEM.Core.Validators
         } 
 
         private Result ExistsOnce(string expected, string actual) 
-        {   
+        {
             return Regex.Matches(actual, expected).Count == 1? Result.Pass: Result.Fail;
         }
 

@@ -29,6 +29,7 @@ namespace YASEM.Core.Validators
         public List<string> ExpectedValues { get; } = new List<string>();
         public string Expression { get; } = "";
         private EmailField Field = new EmailField();
+        private MessagePart Part = new MessagePart();
         private readonly ResourceManager _resourceManager;
         #endregion
 
@@ -58,12 +59,20 @@ namespace YASEM.Core.Validators
             switch (Type)
             {
                 case ValidationType.Field:
-                    if (string.IsNullOrEmpty(step.Field))
+                    if (!string.IsNullOrEmpty(step.Field))
                     {
-                        throw new ArgumentException("Test steps of type 'field' must specify a 'field' property.", nameof(step.Field));
+                        this.Expression = StringUtils.FirstCharToUpperString(step.Field); // e.g., "Subject"
+                        this.Field = EnumValidator.ValidateEnumValue<EmailField>(this.Expression);
                     }
-                    this.Expression = StringUtils.FirstCharToUpperString(step.Field); // e.g., "Subject"
-                    this.Field = EnumValidator.ValidateEnumValue<EmailField>(this.Expression);
+                    else if (!string.IsNullOrEmpty(step.Part))
+                    {
+                        this.Expression = StringUtils.FirstCharToUpperString(step.Part); // e.g., "Body"
+                        this.Part = EnumValidator.ValidateEnumValue<MessagePart>(this.Expression);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Test steps of type 'field' must specify a 'field' or 'part' property.");
+                    }
                     this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
                     break;
                 case ValidationType.Header:
@@ -129,8 +138,16 @@ namespace YASEM.Core.Validators
                 case ValidationType.Field:
                     if (this.ExpectedValue != null)
                     {
-                        FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
-                        result = fieldValidator.PerformOn(message);
+                        if (this.Field != 0)
+                        {
+                            FieldValidator fieldValidator = new FieldValidator(this.Field, this.Assertion, this.ExpectedValue);
+                            result = fieldValidator.PerformOn(message);
+                        }
+                        else if (this.Part != 0)
+                        {
+                            PartValidator partValidator = new PartValidator(this.Part, this.Assertion, this.ExpectedValue);
+                            result = partValidator.PerformOn(message);
+                        }
                     }
                     break;
                 case ValidationType.Header:

@@ -41,6 +41,7 @@ namespace YASEM.Core.Models
     {
         public required string Description { get; set; } //no default
         public string? Field { get; set; } // For field/header validations
+        public string? Part { get; set; } // For part validations
         public required string ValidationType { get; set; } //no default
         public required string Assertion { get; set; } //no default
         public object? ExpectedValue { get; set; } //no default
