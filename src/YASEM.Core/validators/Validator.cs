@@ -53,7 +53,7 @@ namespace YASEM.Core.Validators
 
             if (string.IsNullOrEmpty(step.Assertion))
             {
-                throw new ValidationException($"{ERR_MSG_EMPTY_ASSERTION}"); //TODO: Add file and section in md docs.
+                throw new ValidationException($"{ERR_MSG_EMPTY_ASSERTION}");
             }
 
             switch (Type)
@@ -84,9 +84,12 @@ namespace YASEM.Core.Validators
                     this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
                     break;
                 case ValidationType.Xpath:
-                    // Per description.md, for XPath, the expression is the assertion.
-                    this.Assertion = AssertionType.Expression;
-                    this.Expression = step.Assertion; // The XPath expression itself.
+                    if (string.IsNullOrEmpty(step.Field))
+                    {
+                        throw new ArgumentException("Test steps of type 'xpath' must specify a 'field' property for the xpath expression.", nameof(step.Field));
+                    }
+                    this.Expression = step.Field; // The XPath expression
+                    this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));
                     break;
                 case ValidationType.Content:
                     this.Assertion = EnumValidator.ValidateEnumValue<AssertionType>(StringUtils.FirstCharToUpperString(step.Assertion));

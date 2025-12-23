@@ -36,7 +36,7 @@ Detailed usage instructions can be found in the [docs/usage.md](docs/usage.md) g
 
 ## Compatibility
 
-YASEM is designed for multiplatform usage, offering compatibility across various operating systems by relying on .net 7 (core) technologies. YASEM has been tested in Microsoft Windows 10, 11, OSX for 64 (intel) and Ubuntu Linux 20.04 
+YASEM is designed for multiplatform usage, offering compatibility across various operating systems by relying on .net 9 (core) technologies. YASEM has been tested in Microsoft Windows 10, 11, OSX for 64 (intel) and Ubuntu Linux 20.04 and above. 
 
 ## Configuration
 
